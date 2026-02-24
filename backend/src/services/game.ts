@@ -1,0 +1,606 @@
+import { PrismaClient } from '@prisma/client';
+import { calculateNextDifficulty } from '../utils/difficulty';
+import { questionService } from './question';
+import { generateNisBilQuestions, NisBilDifficulty, NisBilQuestion, QuestionLanguage, QuestionSubject } from './aiQuestion';
+
+const prisma = new PrismaClient();
+
+function allowsDecimals(grade: number): boolean {
+  return grade >= 5;
+}
+
+function allowsNegative(grade: number): boolean {
+  return grade >= 5;
+}
+
+function formatOption(value: number, grade: number): string {
+  if (allowsDecimals(grade)) {
+    return value.toFixed(1);
+  }
+  return String(Math.round(value));
+}
+
+function normalizeAnswer(answer: number, grade: number): number {
+  if (allowsDecimals(grade)) {
+    return Math.round(answer * 10) / 10;
+  }
+  return Math.round(answer);
+}
+
+function buildAnswerOptions(answer: number, grade: number): string[] {
+  const options = new Set<number>();
+  const safeAnswer = Number.isFinite(answer) ? normalizeAnswer(answer, grade) : 0;
+  options.add(safeAnswer);
+
+  const spread = Math.max(5, Math.floor(Math.abs(safeAnswer) * 0.25));
+  const maxAttempts = 50;
+
+  for (let attempt = 0; attempt < maxAttempts && options.size < 4; attempt += 1) {
+    const deltaBase = Math.floor(Math.random() * spread) + 1;
+    const delta = allowsDecimals(grade) ? deltaBase / 10 : deltaBase;
+    const candidate = Math.random() > 0.5 ? safeAnswer + delta : safeAnswer - delta;
+
+    if (allowsNegative(grade) || candidate >= 0) {
+      options.add(normalizeAnswer(candidate, grade));
+    }
+  }
+
+  while (options.size < 4) {
+    const fallback = allowsDecimals(grade) ? options.size / 10 : options.size;
+    options.add(fallback);
+  }
+
+  const allOptions = Array.from(options);
+  for (let i = allOptions.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [allOptions[i], allOptions[j]] = [allOptions[j], allOptions[i]];
+  }
+
+  return allOptions.map((value) => formatOption(value, grade));
+}
+
+const GRADE_LABELS: Record<number, string> = {
+  0: 'general (all levels)',
+  1: '1-6 primary',
+  2: '5 to 6 entry',
+  3: '6 to 7 entry',
+};
+
+const TOPICS_BY_GRADE: Record<number, string[]> = {
+  1: ['addition', 'subtraction', 'multiplication', 'division', 'fractions', 'basic geometry', 'word problems', 'time', 'money'],
+  2: ['fractions', 'decimals', 'ratios', 'percentages', 'basic algebra', 'area and perimeter', 'logic puzzles'],
+  3: ['algebra equations', 'integers', 'coordinate geometry', 'percentages', 'multi-step word problems', 'pattern recognition'],
+};
+
+const LOGIC_TOPICS_BY_GRADE: Record<number, string[]> = {
+  0: ['patterns', 'sequences', 'analogies', 'odd one out', 'logical deductions', 'matrix reasoning', 'series completion', 'abstract reasoning'],
+  1: ['simple patterns', 'odd one out', 'basic sequences', 'picture logic', 'simple analogies'],
+  2: ['number sequences', 'letter patterns', 'analogies', 'logical deductions', 'series completion'],
+  3: ['complex patterns', 'matrix reasoning', 'multi-step logical deductions', 'verbal reasoning', 'abstract reasoning'],
+};
+
+function getGradeLabel(grade: number): string {
+  return GRADE_LABELS[grade] || GRADE_LABELS[1];
+}
+
+function pickTopic(grade: number, subject: QuestionSubject = 'math'): string {
+  const topics = subject === 'logic' 
+    ? (LOGIC_TOPICS_BY_GRADE[grade] || LOGIC_TOPICS_BY_GRADE[1])
+    : (TOPICS_BY_GRADE[grade] || TOPICS_BY_GRADE[1]);
+  return topics[Math.floor(Math.random() * topics.length)];
+}
+
+function mapDifficultyLabelToValue(label: NisBilDifficulty): number {
+  if (label === 'hard') return 9;
+  if (label === 'medium') return 6;
+  return 3;
+}
+
+async function getAdaptiveDifficulty(userId: string): Promise<{ label: NisBilDifficulty; value: number }> {
+  const recentGames = await prisma.gamePlayer.findMany({
+    where: { userId, completedAt: { not: null } },
+    orderBy: { completedAt: 'desc' },
+    take: 5,
+  });
+
+  if (recentGames.length === 0) {
+    return { label: 'easy', value: 3 };
+  }
+
+  const avgScore = recentGames.reduce((sum, game) => sum + game.score, 0) / recentGames.length;
+  if (avgScore > 80) {
+    return { label: 'hard', value: 9 };
+  }
+  if (avgScore >= 50) {
+    return { label: 'medium', value: 6 };
+  }
+  return { label: 'easy', value: 3 };
+}
+
+async function getNisBilQuestions(params: {
+  grade: number;
+  count: number;
+  difficulty: NisBilDifficulty;
+  language: QuestionLanguage;
+  subject: QuestionSubject;
+}): Promise<NisBilQuestion[]> {
+  const gradeLabel = getGradeLabel(params.grade);
+  const topic = pickTopic(params.grade, params.subject);
+  return await generateNisBilQuestions({
+    count: params.count,
+    gradeLabel,
+    difficulty: params.difficulty,
+    topic,
+    language: params.language,
+    subject: params.subject,
+  });
+}
+
+async function upsertQuestionFromAi(aiQuestion: NisBilQuestion, difficultyValue: number, language: QuestionLanguage, subject: QuestionSubject = 'math') {
+  const optionsJson = JSON.stringify(aiQuestion.options);
+  const correctAnswerIndex = aiQuestion.options.indexOf(aiQuestion.correctAnswer);
+
+  if (correctAnswerIndex < 0) {
+    throw new Error('AI question correct answer not found in options');
+  }
+
+  const existing = await prisma.question.findFirst({
+    where: { text: aiQuestion.question, language, subject } as any,
+  });
+
+  if (existing) {
+    const existingExplanation = (existing as { explanation?: string | null }).explanation;
+    if (!existingExplanation && aiQuestion.explanation) {
+      const updateData: any = { explanation: aiQuestion.explanation };
+      return await prisma.question.update({
+        where: { id: existing.id },
+        data: updateData,
+      });
+    }
+
+    return existing;
+  }
+
+  const createData = {
+    text: aiQuestion.question,
+    difficulty: difficultyValue,
+    options: optionsJson,
+    correctAnswer: correctAnswerIndex,
+    language,
+    subject,
+    explanation: aiQuestion.explanation || null,
+  } as any;
+
+  return await prisma.question.create({
+    data: createData,
+  });
+}
+
+export const gameService = {
+  /**
+   * Create a new solo game
+   */
+  async createSoloGame(userId: string, grade: number, language: QuestionLanguage, subject: QuestionSubject = 'math') {
+    // Get user's current difficulty
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const adaptiveDifficulty = await getAdaptiveDifficulty(userId);
+
+    // Create game
+    const game = await prisma.game.create({
+      data: {
+        gameType: 'solo',
+        createdBy: userId,
+        difficulty: adaptiveDifficulty.value,
+        grade,
+      },
+    });
+
+    // Create game player
+    await prisma.gamePlayer.create({
+      data: {
+        gameId: game.id,
+        userId,
+      },
+    });
+
+    const storedQuestions = [] as Array<{ id: string; text: string; options: string[]; difficulty: number; explanation: string | null; subject: string }>;
+
+    const aiQuestions = await getNisBilQuestions({
+      grade,
+      count: 10,
+      difficulty: adaptiveDifficulty.label,
+      language,
+      subject,
+    });
+
+    for (let i = 0; i < aiQuestions.length; i++) {
+      const aiQ = aiQuestions[i];
+      const question = await upsertQuestionFromAi(aiQ, adaptiveDifficulty.value, language, subject);
+
+      await prisma.gameQuestion.create({
+        data: {
+          gameId: game.id,
+          questionId: question.id,
+          questionIndex: i,
+        },
+      });
+
+      const explanation = (question as { explanation?: string | null }).explanation ?? null;
+      storedQuestions.push({
+        id: question.id,
+        text: question.text,
+        options: JSON.parse(question.options),
+        difficulty: question.difficulty,
+        explanation,
+        subject: (question as { subject?: string }).subject ?? 'math',
+      });
+    }
+
+    return {
+      gameId: game.id,
+      grade: game.grade,
+      questions: storedQuestions,
+    };
+  },
+
+
+  /**
+   * Submit answer for a solo game
+   */
+  async submitSoloAnswer(gameId: string, userId: string, questionId: string, selectedAnswer: number, timeToAnswer: number) {
+    // Verify answer
+    const isCorrect = await questionService.verifyAnswer(questionId, selectedAnswer);
+
+    // Save answer
+    await prisma.gameAnswer.create({
+      data: {
+        gameId,
+        userId,
+        questionId,
+        selectedAnswer,
+        isCorrect,
+        timeToAnswer,
+      },
+    });
+
+    return isCorrect;
+  },
+
+  /**
+   * Complete solo game and calculate final score
+   */
+  async completeSoloGame(gameId: string, userId: string) {
+    const answers = await prisma.gameAnswer.findMany({
+      where: { gameId, userId },
+    });
+
+    const correctAnswers = answers.filter((a) => a.isCorrect).length;
+    const totalAnswers = answers.length;
+    const score = (correctAnswers / totalAnswers) * 100;
+
+    // Update game player
+    await prisma.gamePlayer.update({
+      where: {
+        gameId_userId: { gameId, userId },
+      },
+      data: {
+        score: Math.round(score),
+        isWinner: true,
+        completedAt: new Date(),
+      },
+    });
+
+    // Update game status
+    await prisma.game.update({
+      where: { id: gameId },
+      data: { status: 'completed' },
+    });
+
+    // Update user stats
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (user) {
+      const nextDifficulty = calculateNextDifficulty(user.currentDifficulty, correctAnswers, totalAnswers);
+
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          currentDifficulty: nextDifficulty,
+          totalGamesPlayed: user.totalGamesPlayed + 1,
+          totalWins: user.totalWins + 1,
+          bestScore: Math.max(user.bestScore, Math.round(score)),
+        },
+      });
+    }
+
+    return {
+      gameId,
+      score: Math.round(score),
+      correctAnswers,
+      totalAnswers,
+      nextDifficulty: user ? calculateNextDifficulty(user.currentDifficulty, correctAnswers, totalAnswers) : 1,
+    };
+  },
+
+  /**
+   * Create multiplayer game
+   */
+  async createMultiplayerGame(userId: string, grade: number, _language: QuestionLanguage, subject: QuestionSubject = 'math') {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const adaptiveDifficulty = await getAdaptiveDifficulty(userId);
+
+    const game = await prisma.game.create({
+      data: {
+        gameType: 'multiplayer',
+        createdBy: userId,
+        difficulty: adaptiveDifficulty.value,
+        grade,
+        subject,
+      },
+    });
+
+    // Create game player entry for creator
+    await prisma.gamePlayer.create({
+      data: {
+        gameId: game.id,
+        userId,
+      },
+    });
+
+    return {
+      gameId: game.id,
+      createdBy: userId,
+      grade: game.grade,
+    };
+  },
+
+  /**
+   * Join multiplayer game
+   */
+  async joinMultiplayerGame(gameId: string, userId: string, grade: number, language: QuestionLanguage, subject: QuestionSubject = 'math') {
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+    });
+
+    if (!game) {
+      throw new Error('Game not found');
+    }
+
+    if (game.status !== 'active') {
+      throw new Error('Game is not active');
+    }
+
+    if (game.grade !== grade) {
+      throw new Error(`This room is for Grade ${game.grade} players only`);
+    }
+
+    // Check if user already joined
+    const existingPlayer = await prisma.gamePlayer.findUnique({
+      where: { gameId_userId: { gameId, userId } },
+    });
+
+    if (existingPlayer) {
+      throw new Error('User already joined this game');
+    }
+
+    // Check if game already has 2 players
+    const playerCount = await prisma.gamePlayer.count({
+      where: { gameId },
+    });
+
+    if (playerCount >= 2) {
+      throw new Error('Game is full');
+    }
+
+    // Add player
+    await prisma.gamePlayer.create({
+      data: {
+        gameId,
+        userId,
+      },
+    });
+
+    // If 2 players now, generate AI questions
+    if (playerCount === 1) {
+      const game = await prisma.game.findUnique({
+        where: { id: gameId },
+        include: { players: true },
+      });
+
+      if (!game) {
+        throw new Error('Game not found');
+      }
+
+      if (game.players.length === 2) {
+        const storedQuestions = [] as Array<{ id: string; text: string; options: string[]; difficulty: number; explanation: string | null }>;
+
+        const difficultyLabel: NisBilDifficulty = game.difficulty >= 8 ? 'hard' : game.difficulty >= 5 ? 'medium' : 'easy';
+        const gameSubject = (game as any).subject as QuestionSubject || 'math';
+        
+        const aiQuestions = await getNisBilQuestions({
+          grade: game.grade,
+          count: 10,
+          difficulty: difficultyLabel,
+          language,
+          subject: gameSubject,
+        });
+
+        for (let i = 0; i < aiQuestions.length; i++) {
+          const aiQ = aiQuestions[i];
+          const question = await upsertQuestionFromAi(aiQ, game.difficulty, language, gameSubject);
+
+          await prisma.gameQuestion.create({
+            data: {
+              gameId: game.id,
+              questionId: question.id,
+              questionIndex: i,
+            },
+          });
+
+          const explanation = (question as { explanation?: string | null }).explanation ?? null;
+          storedQuestions.push({
+            id: question.id,
+            text: question.text,
+            options: JSON.parse(question.options),
+            difficulty: question.difficulty,
+            explanation,
+          });
+        }
+
+        return {
+          gameId,
+          status: 'ready',
+          grade: game.grade,
+          questions: storedQuestions,
+        };
+      }
+    }
+
+    return {
+      gameId,
+      status: 'waiting',
+      grade: game.grade,
+    };
+  },
+
+  /**
+   * Get game details
+   */
+  async getGameDetails(gameId: string) {
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+      include: {
+        players: {
+          include: { user: true },
+        },
+        questions: {
+          include: { question: true },
+        },
+      },
+    });
+
+    if (!game) {
+      throw new Error('Game not found');
+    }
+
+    return game;
+  },
+
+  /**
+   * Get leaderboard
+   */
+  async getLeaderboard(limit: number = 100) {
+    const users = await prisma.user.findMany({
+      orderBy: { totalWins: 'desc' },
+      take: limit,
+      select: {
+        id: true,
+        username: true,
+        totalWins: true,
+        totalGamesPlayed: true,
+      },
+    });
+
+    // Calculate additional stats for each user
+    const leaderboard = await Promise.all(
+      users.map(async (user, index) => {
+        // Calculate win rate
+        const winRate = user.totalGamesPlayed > 0 
+          ? Math.round((user.totalWins / user.totalGamesPlayed) * 1000) / 10 
+          : 0;
+
+        // Get completed games for streak calculation
+        const completedGames = await prisma.gamePlayer.findMany({
+          where: { 
+            userId: user.id,
+            completedAt: { not: null }
+          },
+          include: {
+            game: {
+              select: { gameType: true, createdAt: true, subject: true }
+            }
+          },
+          orderBy: { completedAt: 'desc' }
+        });
+
+        // Calculate current streak
+        let currentStreak = 0;
+        if (completedGames.length > 0) {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          
+          let checkDate = new Date(today);
+          const gamesByDate = new Map<string, boolean>();
+          
+          completedGames.forEach(game => {
+            if (game.completedAt) {
+              const dateKey = game.completedAt.toISOString().slice(0, 10);
+              gamesByDate.set(dateKey, true);
+            }
+          });
+          
+          // Check if played today or yesterday
+          const todayKey = today.toISOString().slice(0, 10);
+          const yesterday = new Date(today);
+          yesterday.setDate(yesterday.getDate() - 1);
+          const yesterdayKey = yesterday.toISOString().slice(0, 10);
+          
+          if (!gamesByDate.has(todayKey) && !gamesByDate.has(yesterdayKey)) {
+            currentStreak = 0;
+          } else {
+            // Start from today if played today, else yesterday
+            if (!gamesByDate.has(todayKey)) {
+              checkDate = yesterday;
+            }
+            
+            while (gamesByDate.has(checkDate.toISOString().slice(0, 10))) {
+              currentStreak++;
+              checkDate.setDate(checkDate.getDate() - 1);
+            }
+          }
+        }
+
+        // Calculate subject preference
+        const subjectCount = completedGames.reduce((acc, game) => {
+          const subject = game.game.subject || 'math';
+          acc[subject] = (acc[subject] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>);
+
+        let subjectPreference = 'math';
+        if (subjectCount['logic'] && (!subjectCount['math'] || subjectCount['logic'] > subjectCount['math'])) {
+          subjectPreference = 'logic';
+        }
+
+        return {
+          rank: index + 1,
+          id: user.id,
+          username: user.username,
+          totalWins: user.totalWins,
+          totalGames: user.totalGamesPlayed,
+          winRate,
+          currentStreak,
+          subject: subjectPreference
+        };
+      })
+    );
+
+    return leaderboard;
+  },
+};

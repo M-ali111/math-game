@@ -1,0 +1,86 @@
+import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+
+export const Login: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuccess }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isSignup, setIsSignup] = useState(false);
+  const [username, setUsername] = useState('');
+  const { login, signup } = useAuth();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    try {
+      if (isSignup) {
+        await signup(email, username, password);
+      } else {
+        await login(email, password);
+      }
+      onLoginSuccess();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  return (
+    <div className="flex justify-center items-center min-h-screen bg-amber-50 px-4">
+      <div className="bg-white rounded-2xl shadow-lg px-6 py-8 w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="text-4xl mb-3">🧠</div>
+          <h1 className="text-3xl font-bold text-gray-900">Math Game</h1>
+          <p className="text-gray-500 text-sm mt-2">Master Mathematics & Logic</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {isSignup && (
+            <input
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400"
+              required
+            />
+          )}
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400"
+            required
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400"
+            required
+          />
+          {error && <p className="text-red-500 text-center text-sm font-medium">{error}</p>}
+          <button 
+            type="submit" 
+            className="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-4 rounded-2xl transition-colors text-lg mt-2"
+          >
+            {isSignup ? 'Sign Up' : 'Log In'}
+          </button>
+        </form>
+
+        <p className="text-center mt-6 text-gray-600">
+          {isSignup ? 'Already have an account? ' : "Don't have an account? "}
+          <button
+            type="button"
+            onClick={() => setIsSignup(!isSignup)}
+            className="text-cyan-500 hover:text-cyan-600 font-bold cursor-pointer"
+          >
+            {isSignup ? 'Log In' : 'Sign Up'}
+          </button>
+        </p>
+      </div>
+    </div>
+  );
+};
