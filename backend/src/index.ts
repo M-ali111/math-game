@@ -14,14 +14,29 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173'],
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://localhost:5173',
+      'https://math-game-frontend-aihx.onrender.com',
+      process.env.FRONTEND_URL || ''
+    ],
     credentials: true,
     methods: ['GET', 'POST'],
   },
 });
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:5173',
+    'https://math-game-frontend-aihx.onrender.com',
+    process.env.FRONTEND_URL || ''
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 // Routes
