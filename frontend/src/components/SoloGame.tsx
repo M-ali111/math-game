@@ -152,13 +152,13 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
   if (!gameStarted || loading) {
     return (
       <div className="flex flex-col min-h-screen bg-amber-50 items-center justify-center px-4">
-        <div className="bg-white rounded-2xl shadow-lg p-8 text-center max-w-md">
-          <div className="text-4xl mb-4">⚡</div>
-          <p className="text-xl font-bold text-gray-900">Loading game...</p>
+        <div className="bg-white rounded-2xl shadow-lg p-8 sm:p-12 text-center max-w-md w-full">
+          <div className="text-5xl sm:text-6xl mb-4">⚡</div>
+          <p className="text-xl sm:text-2xl font-bold text-gray-900">Loading game...</p>
           <div className="mt-6 flex justify-center gap-1">
-            <div className="w-2 h-2 bg-cyan-500 rounded-full animate-bounce"></div>
-            <div className="w-2 h-2 bg-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-            <div className="w-2 h-2 bg-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+            <div className="w-3 h-3 bg-cyan-500 rounded-full animate-bounce"></div>
+            <div className="w-3 h-3 bg-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+            <div className="w-3 h-3 bg-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
           </div>
         </div>
       </div>
@@ -171,33 +171,37 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
     
     return (
       <div className="flex flex-col min-h-screen bg-amber-50 items-center justify-center px-4 py-8">
-        <div className="bg-white rounded-2xl shadow-lg max-w-md w-full p-8 text-center">
-          <div className="text-5xl mb-4">{isPassed ? '🎉' : '💪'}</div>
-          <h1 className={`text-3xl font-bold mb-6 ${isPassed ? 'text-green-600' : 'text-cyan-600'}`}>
+        <div className="bg-white rounded-2xl shadow-lg max-w-md w-full p-6 sm:p-8 text-center">
+          <div className="text-6xl sm:text-7xl mb-4">{isPassed ? '🎉' : '💪'}</div>
+          <h1 className={`text-2xl sm:text-3xl font-bold mb-6 ${
+            isPassed ? 'text-green-600' : 'text-cyan-600'
+          }`}>
             {isPassed ? 'Excellent!' : 'Good Effort!'}
           </h1>
           
           <div className={`inline-block px-6 py-4 rounded-2xl mb-8 ${
             isPassed ? 'bg-green-100' : 'bg-cyan-100'
           }`}>
-            <p className={`text-4xl font-bold ${isPassed ? 'text-green-600' : 'text-cyan-600'}`}>
+            <p className={`text-5xl sm:text-6xl font-bold ${
+              isPassed ? 'text-green-600' : 'text-cyan-600'
+            }`}>
               {gameResult.score}%
             </p>
           </div>
 
-          <div className="space-y-3 text-left bg-gray-50 rounded-xl p-4 mb-6">
-            <p className="text-gray-900"><strong>Correct Answers:</strong> {gameResult.correctAnswers}/{gameResult.totalAnswers}</p>
-            <p className="text-gray-900"><strong>Grade:</strong> {gradeLabel || selectedGrade}</p>
-            <p className="text-gray-900"><strong>Next Level:</strong> {gameResult.nextDifficulty}</p>
+          <div className="space-y-3 text-left bg-gray-50 rounded-xl p-4 sm:p-6 mb-6">
+            <p className="text-gray-900 text-base sm:text-lg"><strong>Correct Answers:</strong> {gameResult.correctAnswers}/{gameResult.totalAnswers}</p>
+            <p className="text-gray-900 text-base sm:text-lg"><strong>Grade:</strong> {gradeLabel || selectedGrade}</p>
+            <p className="text-gray-900 text-base sm:text-lg"><strong>Next Level:</strong> {gameResult.nextDifficulty}</p>
           </div>
 
-          <p className="text-sm text-gray-600 italic mb-6">
+          <p className="text-base sm:text-sm text-gray-600 italic mb-6">
             {isPassed ? '✓ Great performance! Difficulty increased.' : '✓ Keep practicing to improve!'}
           </p>
 
           <button 
             onClick={onBack} 
-            className="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-4 rounded-2xl text-lg transition-colors"
+            className="w-full bg-cyan-500 hover:bg-cyan-600 active:bg-cyan-700 text-white font-bold py-4 sm:py-5 rounded-2xl text-lg sm:text-xl transition-colors min-h-[56px]"
           >
             Back to Menu
           </button>
@@ -209,33 +213,33 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
   const currentQuestion = questions[currentIndex];
 
   return (
-    <div className="flex flex-col min-h-screen bg-amber-50">
+    <div className="flex flex-col min-h-screen bg-amber-50 pb-20">
       {/* Top Bar */}
-      <div className="bg-white shadow-md px-4 py-4">
+      <div className="bg-white shadow-md px-4 py-4 sm:py-5">
         <div className="max-w-md mx-auto flex justify-between items-center mb-3">
           <div>
-            <p className="text-xs text-gray-500 uppercase">Question</p>
-            <p className="text-lg font-bold text-gray-900">{currentIndex + 1} of {questions.length}</p>
+            <p className="text-xs sm:text-sm text-gray-500 uppercase font-semibold">Question</p>
+            <p className="text-xl sm:text-2xl font-bold text-gray-900">{currentIndex + 1} of {questions.length}</p>
           </div>
           <div className="text-right">
-            <p className="text-xs text-gray-500 uppercase">Score</p>
-            <p className="text-lg font-bold text-cyan-500">{score}/{currentIndex}</p>
+            <p className="text-xs sm:text-sm text-gray-500 uppercase font-semibold">Score</p>
+            <p className="text-xl sm:text-2xl font-bold text-cyan-500">{score}/{currentIndex}</p>
           </div>
         </div>
         
         {/* Progress Bar */}
-        <div className="max-w-md mx-auto bg-gray-200 rounded-full h-2">
+        <div className="max-w-md mx-auto bg-gray-200 rounded-full h-3">
           <div 
-            className="bg-cyan-500 h-2 rounded-full transition-all duration-300"
+            className="bg-cyan-500 h-3 rounded-full transition-all duration-300"
             style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
           ></div>
         </div>
       </div>
 
       {/* Subject Badge */}
-      <div className="bg-white border-b border-gray-100 px-4 py-3">
+      <div className="bg-white border-b border-gray-100 px-4 py-3 sm:py-4">
         <div className="max-w-md mx-auto">
-          <span className={`inline-block px-4 py-2 rounded-full text-white text-sm font-bold ${
+          <span className={`inline-block px-4 py-2 sm:py-3 rounded-full text-white text-base sm:text-sm font-bold ${
             currentQuestion.subject === 'logic' ? 'bg-purple-500' : 'bg-blue-500'
           }`}>
             {currentQuestion.subject === 'logic' ? '🧠 Logic & IQ' : '🔢 Mathematics'}
@@ -244,16 +248,16 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 max-w-md mx-auto w-full">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-6 sm:py-8 max-w-md mx-auto w-full">
         {currentQuestion && (
           <>
             {/* Question Card */}
-            <div className="bg-white rounded-2xl shadow-md p-6 w-full mb-8 text-center">
-              <h2 className="text-xl font-bold text-gray-900">{currentQuestion.text}</h2>
+            <div className="bg-white rounded-2xl shadow-md p-6 sm:p-8 w-full mb-6 sm:mb-8 text-center">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">{currentQuestion.text}</h2>
             </div>
 
             {/* Answer Options Grid */}
-            <div className="grid grid-cols-2 gap-3 w-full mb-8">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full mb-6 sm:mb-8">
               {currentQuestion.options.map((option, index) => (
                 <button
                   key={index}
@@ -262,10 +266,10 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
                     handleAnswerSubmit(index);
                   }}
                   disabled={loading || selectedAnswer !== null || awaitingNext}
-                  className={`p-4 rounded-2xl text-center font-bold transition-all ${
+                  className={`p-4 sm:p-5 rounded-2xl text-center font-bold transition-all min-h-[80px] sm:min-h-[90px] text-lg sm:text-xl flex items-center justify-center ${
                     selectedAnswer === index
-                      ? 'bg-cyan-500 text-white shadow-lg'
-                      : 'bg-white text-gray-900 border-2 border-gray-200 hover:border-cyan-300'
+                      ? 'bg-cyan-500 text-white shadow-lg scale-95'
+                      : 'bg-white text-gray-900 border-2 border-gray-200 hover:border-cyan-300 active:scale-95'
                   } ${loading || selectedAnswer !== null || awaitingNext ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                 >
                   {option}
@@ -275,9 +279,9 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
 
             {/* Explanation Box */}
             {answerExplanation && (
-              <div className="bg-yellow-50 border-2 border-yellow-300 rounded-2xl p-4 w-full mb-6">
-                <p className="font-bold text-yellow-900 mb-2">💡 Explanation</p>
-                <p className="text-yellow-800 text-sm">{answerExplanation}</p>
+              <div className="bg-yellow-50 border-2 border-yellow-300 rounded-2xl p-4 sm:p-5 w-full mb-6">
+                <p className="font-bold text-yellow-900 mb-2 text-lg sm:text-base">💡 Explanation</p>
+                <p className="text-yellow-800 text-base sm:text-sm leading-relaxed">{answerExplanation}</p>
               </div>
             )}
 
@@ -285,7 +289,7 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
             {awaitingNext && (
               <button 
                 onClick={handleNextAfterExplanation} 
-                className="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-4 rounded-2xl text-lg transition-colors mb-12"
+                className="w-full bg-cyan-500 hover:bg-cyan-600 active:bg-cyan-700 text-white font-bold py-4 sm:py-5 rounded-2xl text-lg sm:text-xl transition-colors mb-12 min-h-[56px]"
               >
                 {currentIndex < questions.length - 1 ? 'Next Question' : 'See Results'}
               </button>
@@ -295,11 +299,11 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
       </div>
 
       {/* Exit Button */}
-      <div className="bg-white border-t border-gray-200 px-4 py-4">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 sm:py-4 safe-area-inset-bottom">
         <div className="max-w-md mx-auto">
           <button 
             onClick={onBack} 
-            className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-2xl transition-colors"
+            className="w-full bg-red-500 hover:bg-red-600 active:bg-red-700 text-white font-bold py-4 rounded-2xl transition-colors text-base sm:text-lg min-h-[56px]"
           >
             Exit Game
           </button>

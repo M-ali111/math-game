@@ -283,28 +283,28 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
   };
 
   const incomingRequestModal = incomingRequest ? (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center px-4">
-      <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm">
-        <p className="text-lg font-bold text-gray-900 mb-2 text-center">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center px-4 z-50">
+      <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 w-full max-w-sm">
+        <p className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 text-center">
           👥 {incomingRequest.fromUsername}
         </p>
-        <p className="text-gray-600 text-center mb-6">
+        <p className="text-gray-600 text-center mb-6 text-base">
           wants to play with you!
         </p>
-        <div className="bg-cyan-50 rounded-xl p-3 mb-6 text-center">
-          <p className="text-sm text-gray-600">Grade</p>
-          <p className="text-lg font-bold text-cyan-600">{incomingRequest.grade}</p>
+        <div className="bg-cyan-50 rounded-xl p-4 mb-6 text-center">
+          <p className="text-base sm:text-sm text-gray-600">Grade</p>
+          <p className="text-xl sm:text-2xl font-bold text-cyan-600">{incomingRequest.grade}</p>
         </div>
         <div className="flex gap-3">
           <button 
             onClick={handleDeclineRequest}
-            className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition-colors"
+            className="flex-1 bg-red-500 hover:bg-red-600 active:bg-red-700 text-white font-bold py-4 rounded-xl transition-colors text-base min-h-[56px]"
           >
             Decline
           </button>
           <button 
             onClick={handleAcceptRequest}
-            className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl transition-colors"
+            className="flex-1 bg-green-500 hover:bg-green-600 active:bg-green-700 text-white font-bold py-4 rounded-xl transition-colors text-base min-h-[56px]"
           >
             Accept
           </button>
@@ -318,15 +318,15 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
       <div className="flex flex-col min-h-screen bg-amber-50">
         {/* Header */}
         <div className="bg-white shadow-sm px-4 py-6 text-center">
-          <h1 className="text-2xl font-bold text-gray-900">🎮 Multiplayer</h1>
-          <p className="text-gray-500 text-sm mt-2">Challenge other players</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">🎮 Multiplayer</h1>
+          <p className="text-gray-500 text-base sm:text-sm mt-2">Challenge other players</p>
         </div>
 
         {/* Main content */}
         <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 max-w-md mx-auto w-full">
           {/* Notice */}
           {requestNotice && (
-            <div className="w-full bg-yellow-100 border-2 border-yellow-400 text-yellow-800 px-4 py-3 rounded-xl mb-6 text-sm font-semibold">
+            <div className="w-full bg-yellow-100 border-2 border-yellow-400 text-yellow-800 px-4 py-3 rounded-xl mb-6 text-base sm:text-sm font-semibold">
               {requestNotice}
             </div>
           )}
@@ -336,29 +336,29 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
             <button
               onClick={() => handleSelectGameAction('create')}
               disabled={loading}
-              className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-2xl py-6 px-4 text-center transition-all shadow-md disabled:opacity-75"
+              className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 active:from-green-700 active:to-green-800 text-white rounded-2xl py-6 sm:py-8 px-4 text-center transition-all shadow-md disabled:opacity-75 min-h-[140px]"
             >
-              <div className="text-3xl mb-2">⚙️</div>
-              <h2 className="text-xl font-bold">{loading ? 'Creating...' : 'Create Game'}</h2>
-              <p className="text-sm mt-2 text-green-100">Start a new game room</p>
+              <div className="text-5xl sm:text-4xl mb-2">⚙️</div>
+              <h2 className="text-xl sm:text-2xl font-bold">{loading ? 'Creating...' : 'Create Game'}</h2>
+              <p className="text-base sm:text-sm mt-2 text-green-100">Start a new game room</p>
             </button>
 
             <button
               onClick={() => handleSelectGameAction('join')}
-              className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-2xl py-6 px-4 text-center transition-all shadow-md"
+              className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 active:from-blue-700 active:to-blue-800 text-white rounded-2xl py-6 sm:py-8 px-4 text-center transition-all shadow-md min-h-[140px]"
             >
-              <div className="text-3xl mb-2">🎟️</div>
-              <h2 className="text-xl font-bold">Join Game</h2>
-              <p className="text-sm mt-2 text-blue-100">Enter a Game ID</p>
+              <div className="text-5xl sm:text-4xl mb-2">🎟️</div>
+              <h2 className="text-xl sm:text-2xl font-bold">Join Game</h2>
+              <p className="text-base sm:text-sm mt-2 text-blue-100">Enter a Game ID</p>
             </button>
 
             <button
               onClick={() => handleSelectGameAction('random')}
-              className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-2xl py-6 px-4 text-center transition-all shadow-md"
+              className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 active:from-purple-700 active:to-purple-800 text-white rounded-2xl py-6 sm:py-8 px-4 text-center transition-all shadow-md min-h-[140px]"
             >
-              <div className="text-3xl mb-2">🎲</div>
-              <h2 className="text-xl font-bold">Play Random</h2>
-              <p className="text-sm mt-2 text-purple-100">Find a random opponent</p>
+              <div className="text-5xl sm:text-4xl mb-2">🎲</div>
+              <h2 className="text-xl sm:text-2xl font-bold">Play Random</h2>
+              <p className="text-base sm:text-sm mt-2 text-purple-100">Find a random opponent</p>
             </button>
           </div>
         </div>
@@ -368,7 +368,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
           <div className="max-w-md mx-auto">
             <button 
               onClick={onBack}
-              className="w-full bg-gray-300 hover:bg-gray-400 text-gray-900 font-bold py-3 rounded-2xl transition-colors"
+              className="w-full bg-gray-300 hover:bg-gray-400 active:bg-gray-500 text-gray-900 font-bold py-4 rounded-2xl transition-colors text-base min-h-[56px]"
             >
               ← Back
             </button>
@@ -410,31 +410,31 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
       <div className="flex flex-col min-h-screen bg-amber-50">
         {/* Header */}
         <div className="bg-white shadow-sm px-4 py-6 text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Play Random</h1>
-          <p className="text-gray-500 text-sm mt-2">Find an opponent</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Play Random</h1>
+          <p className="text-gray-500 text-base sm:text-sm mt-2">Find an opponent</p>
         </div>
 
         {/* Main content */}
         <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 max-w-md mx-auto w-full">
           {requestNotice && (
-            <div className="w-full bg-yellow-100 border-2 border-yellow-400 text-yellow-800 px-4 py-3 rounded-xl mb-6">
+            <div className="w-full bg-yellow-100 border-2 border-yellow-400 text-yellow-800 px-4 py-3 rounded-xl mb-6 text-base">
               {requestNotice}
             </div>
           )}
 
           {selectedGrade !== null && (
-            <div className="w-full bg-cyan-50 border-2 border-cyan-300 text-cyan-900 px-4 py-3 rounded-xl mb-6 font-semibold text-center">
+            <div className="w-full bg-cyan-50 border-2 border-cyan-300 text-cyan-900 px-4 py-3 rounded-xl mb-6 font-semibold text-center text-base">
               Grade: {selectedGrade}
             </div>
           )}
 
           {onlineUsers.length === 0 ? (
             <div className="w-full bg-white rounded-2xl shadow-md p-8 text-center">
-              <div className="text-4xl mb-4">😴</div>
-              <p className="text-gray-600 mb-6">No players online right now.</p>
+              <div className="text-5xl sm:text-6xl mb-4">😴</div>
+              <p className="text-gray-600 mb-6 text-base">No players online right now.</p>
               <button
                 onClick={() => setMode('selection')}
-                className="w-full bg-gray-300 hover:bg-gray-400 text-gray-900 font-bold py-3 rounded-2xl transition-colors"
+                className="w-full bg-gray-300 hover:bg-gray-400 active:bg-gray-500 text-gray-900 font-bold py-4 rounded-2xl transition-colors min-h-[56px]"
               >
                 ← Back
               </button>
@@ -443,20 +443,20 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
             <>
               <div className="w-full space-y-3 mb-8">
                 {onlineUsers.map((user) => (
-                  <div key={user.userId} className="bg-white rounded-2xl shadow-md p-4 flex justify-between items-center">
+                  <div key={user.userId} className="bg-white rounded-2xl shadow-md p-4 sm:p-5 flex justify-between items-center">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold">
+                      <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold text-xl">
                         👤
                       </div>
-                      <span className="font-semibold text-gray-900">{user.username}</span>
+                      <span className="font-semibold text-gray-900 text-base">{user.username}</span>
                     </div>
                     <button
                       onClick={() => handleSendRequest(user.userId)}
                       disabled={outgoingRequestTo === user.userId}
-                      className={`px-4 py-2 rounded-full font-bold text-sm transition-colors ${
+                      className={`px-4 sm:px-6 py-3 rounded-full font-bold text-base transition-colors min-h-[48px] ${
                         outgoingRequestTo === user.userId
                           ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                          : 'bg-cyan-500 hover:bg-cyan-600 text-white'
+                          : 'bg-cyan-500 hover:bg-cyan-600 active:bg-cyan-700 text-white'
                       }`}
                     >
                       {outgoingRequestTo === user.userId ? 'Requesting...' : 'Play'}
@@ -466,7 +466,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
               </div>
               <button
                 onClick={() => setMode('selection')}
-                className="w-full bg-gray-300 hover:bg-gray-400 text-gray-900 font-bold py-3 rounded-2xl transition-colors"
+                className="w-full bg-gray-300 hover:bg-gray-400 active:bg-gray-500 text-gray-900 font-bold py-4 rounded-2xl transition-colors min-h-[56px]"
               >
                 ← Back
               </button>
@@ -484,30 +484,30 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
       <div className="flex flex-col min-h-screen bg-amber-50">
         {/* Header */}
         <div className="bg-white shadow-sm px-4 py-6 text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Join Game</h1>
-          <p className="text-gray-500 text-sm mt-2">Enter a Game ID</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Join Game</h1>
+          <p className="text-gray-500 text-base sm:text-sm mt-2">Enter a Game ID</p>
         </div>
 
         {/* Main content */}
         <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 max-w-md mx-auto w-full">
-          <div className="w-full bg-white rounded-2xl shadow-md p-6">
+          <div className="w-full bg-white rounded-2xl shadow-md p-6 sm:p-8">
             <input
               type="text"
               placeholder="Enter Game ID"
               value={joinGameId}
               onChange={(e) => setJoinGameId(e.target.value)}
-              className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400 mb-6"
+              className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400 mb-6 text-base"
             />
             <button
               onClick={joinGame}
               disabled={loading}
-              className="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-4 rounded-2xl text-lg transition-colors disabled:opacity-75 mb-3"
+              className="w-full bg-cyan-500 hover:bg-cyan-600 active:bg-cyan-700 text-white font-bold py-4 sm:py-5 rounded-2xl text-lg transition-colors disabled:opacity-75 mb-3 min-h-[56px]"
             >
               {loading ? 'Joining...' : 'Join'}
             </button>
             <button
               onClick={() => setMode('selection')}
-              className="w-full bg-gray-300 hover:bg-gray-400 text-gray-900 font-bold py-3 rounded-2xl transition-colors"
+              className="w-full bg-gray-300 hover:bg-gray-400 active:bg-gray-500 text-gray-900 font-bold py-4 rounded-2xl transition-colors min-h-[56px]"
             >
               ← Back
             </button>
@@ -524,40 +524,40 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
       <div className="flex flex-col min-h-screen bg-amber-50">
         {/* Header */}
         <div className="bg-white shadow-sm px-4 py-6 text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Waiting for Opponent...</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Waiting for Opponent...</h1>
         </div>
 
         {/* Main content */}
         <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 max-w-md mx-auto w-full">
-          <div className="bg-white rounded-2xl shadow-lg p-8 text-center w-full">
+          <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 text-center w-full">
             {/* Game ID */}
             <div className="mb-6">
-              <p className="text-sm text-gray-500 uppercase mb-2">Game ID</p>
-              <div className="bg-gray-100 text-gray-900 font-bold text-2xl py-4 px-4 rounded-xl break-all">
+              <p className="text-base sm:text-sm text-gray-500 uppercase mb-2 font-semibold">Game ID</p>
+              <div className="bg-gray-100 text-gray-900 font-bold text-xl sm:text-2xl py-4 px-4 rounded-xl break-all">
                 {gameId}
               </div>
             </div>
 
             {selectedGrade !== null && (
-              <div className="mb-6 p-3 bg-cyan-50 rounded-xl">
-                <p className="text-sm text-gray-600 mb-1">Grade</p>
-                <p className="text-lg font-bold text-cyan-600">{gradeLabel || selectedGrade}</p>
+              <div className="mb-6 p-4 bg-cyan-50 rounded-xl">
+                <p className="text-base sm:text-sm text-gray-600 mb-1">Grade</p>
+                <p className="text-xl sm:text-2xl font-bold text-cyan-600">{gradeLabel || selectedGrade}</p>
               </div>
             )}
 
             {/* Players */}
             <div className="mb-6">
-              <p className="text-sm text-gray-500 uppercase mb-4">Players ({players.length}/2)</p>
+              <p className="text-base sm:text-sm text-gray-500 uppercase mb-4 font-semibold">Players ({players.length}/2)</p>
               {players.length > 0 ? (
                 <ul className="space-y-3">
                   {players.map((p) => (
-                    <li key={p.id} className="bg-cyan-50 text-cyan-900 font-semibold p-3 rounded-xl">
+                    <li key={p.id} className="bg-cyan-50 text-cyan-900 font-semibold p-4 rounded-xl text-base">
                       👤 {p.username}
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-gray-500">Waiting for players to join...</p>
+                <p className="text-gray-500 text-base">Waiting for players to join...</p>
               )}
             </div>
 
@@ -568,7 +568,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
               <div className="w-3 h-3 bg-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
             </div>
 
-            <p className="text-gray-600 mb-6">Finding opponent...</p>
+            <p className="text-gray-600 mb-6 text-base">Finding opponent...</p>
           </div>
         </div>
 
@@ -583,29 +583,31 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
     
     return (
       <div className="flex flex-col min-h-screen bg-amber-50 items-center justify-center px-4 py-8">
-        <div className="bg-white rounded-2xl shadow-lg max-w-md w-full p-8 text-center">
-          <div className="text-5xl mb-4">{isCurrentUserWinner ? '🏆' : '💪'}</div>
-          <h1 className={`text-3xl font-bold mb-6 ${isCurrentUserWinner ? 'text-green-600' : 'text-cyan-600'}`}>
+        <div className="bg-white rounded-2xl shadow-lg max-w-md w-full p-6 sm:p-8 text-center">
+          <div className="text-6xl sm:text-7xl mb-4">{isCurrentUserWinner ? '🏆' : '💪'}</div>
+          <h1 className={`text-2xl sm:text-3xl font-bold mb-6 ${
+            isCurrentUserWinner ? 'text-green-600' : 'text-cyan-600'
+          }`}>
             {isCurrentUserWinner ? 'You Won!' : 'Game Over!'}
           </h1>
           
           {/* Winner card */}
           <div className="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-400 rounded-2xl p-6 mb-4">
-            <p className="text-sm text-green-600 font-bold mb-2">🥇 WINNER</p>
-            <h2 className="text-2xl font-bold text-green-700 mb-2">{winnerName}</h2>
-            <p className="text-3xl font-bold text-green-600">{winnerScore}%</p>
+            <p className="text-base sm:text-sm text-green-600 font-bold mb-2">🥇 WINNER</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-green-700 mb-2">{winnerName}</h2>
+            <p className="text-4xl sm:text-5xl font-bold text-green-600">{winnerScore}%</p>
           </div>
 
           {/* Loser card */}
           <div className="bg-gray-100 rounded-2xl p-6 mb-8">
-            <p className="text-sm text-gray-600 font-bold mb-2">Second Place</p>
-            <h3 className="text-xl font-bold text-gray-700 mb-2">{loserName}</h3>
-            <p className="text-2xl font-bold text-gray-600">{loserScore}%</p>
+            <p className="text-base sm:text-sm text-gray-600 font-bold mb-2">Second Place</p>
+            <h3 className="text-lg sm:text-xl font-bold text-gray-700 mb-2">{loserName}</h3>
+            <p className="text-2xl sm:text-3xl font-bold text-gray-600">{loserScore}%</p>
           </div>
 
           <button 
             onClick={onBack} 
-            className="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-4 rounded-2xl text-lg transition-colors"
+            className="w-full bg-cyan-500 hover:bg-cyan-600 active:bg-cyan-700 text-white font-bold py-4 sm:py-5 rounded-2xl text-lg sm:text-xl transition-colors min-h-[56px]"
           >
             Back to Menu
           </button>
@@ -619,33 +621,33 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
 
   if (mode === 'playing' && currentQuestion) {
     return (
-      <div className="flex flex-col min-h-screen bg-amber-50">
+      <div className="flex flex-col min-h-screen bg-amber-50 pb-20">
         {/* Top Bar */}
-        <div className="bg-white shadow-md px-4 py-4">
+        <div className="bg-white shadow-md px-4 py-4 sm:py-5">
           <div className="max-w-md mx-auto flex justify-between items-center mb-3">
             <div>
-              <p className="text-xs text-gray-500 uppercase">Question</p>
-              <p className="text-lg font-bold text-gray-900">{currentIndex + 1} of {questions.length}</p>
+              <p className="text-xs sm:text-sm text-gray-500 uppercase font-semibold">Question</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900">{currentIndex + 1} of {questions.length}</p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-gray-500 uppercase">Status</p>
-              <p className="text-lg font-bold text-cyan-500 capitalize">{gameStatus}</p>
+              <p className="text-xs sm:text-sm text-gray-500 uppercase font-semibold">Status</p>
+              <p className="text-xl sm:text-2xl font-bold text-cyan-500 capitalize">{gameStatus}</p>
             </div>
           </div>
           
           {/* Progress Bar */}
-          <div className="max-w-md mx-auto bg-gray-200 rounded-full h-2">
+          <div className="max-w-md mx-auto bg-gray-200 rounded-full h-3">
             <div 
-              className="bg-cyan-500 h-2 rounded-full transition-all duration-300"
+              className="bg-cyan-500 h-3 rounded-full transition-all duration-300"
               style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
             ></div>
           </div>
         </div>
 
         {/* Subject Badge */}
-        <div className="bg-white border-b border-gray-100 px-4 py-3">
+        <div className="bg-white border-b border-gray-100 px-4 py-3 sm:py-4">
           <div className="max-w-md mx-auto">
-            <span className={`inline-block px-4 py-2 rounded-full text-white text-sm font-bold ${
+            <span className={`inline-block px-4 py-2 sm:py-3 rounded-full text-white text-base sm:text-sm font-bold ${
               currentQuestion.subject === 'logic' ? 'bg-purple-500' : 'bg-blue-500'
             }`}>
               {currentQuestion.subject === 'logic' ? '🧠 Logic & IQ' : '🔢 Mathematics'}
@@ -654,23 +656,23 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 max-w-md mx-auto w-full">
+        <div className="flex-1 flex flex-col items-center justify-center px-4 py-6 sm:py-8 max-w-md mx-auto w-full">
           {/* Question Card */}
-          <div className="bg-white rounded-2xl shadow-md p-6 w-full mb-8 text-center">
-            <h2 className="text-xl font-bold text-gray-900">{currentQuestion.text}</h2>
+          <div className="bg-white rounded-2xl shadow-md p-6 sm:p-8 w-full mb-6 sm:mb-8 text-center">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">{currentQuestion.text}</h2>
           </div>
 
           {/* Answer Options Grid */}
-          <div className="grid grid-cols-2 gap-3 w-full mb-8">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full mb-6 sm:mb-8">
             {currentQuestion.options.map((option, index) => (
               <button
                 key={index}
                 onClick={() => handleAnswerSubmit(index)}
                 disabled={selectedAnswer !== null}
-                className={`p-4 rounded-2xl text-center font-bold transition-all ${
+                className={`p-4 sm:p-5 rounded-2xl text-center font-bold transition-all min-h-[80px] sm:min-h-[90px] text-lg sm:text-xl flex items-center justify-center ${
                   selectedAnswer === index
-                    ? 'bg-cyan-500 text-white shadow-lg'
-                    : 'bg-white text-gray-900 border-2 border-gray-200 hover:border-cyan-300'
+                    ? 'bg-cyan-500 text-white shadow-lg scale-95'
+                    : 'bg-white text-gray-900 border-2 border-gray-200 hover:border-cyan-300 active:scale-95'
                 } ${selectedAnswer !== null ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
               >
                 {option}
@@ -680,9 +682,9 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
 
           {/* Explanation Box */}
           {answerExplanation && (
-            <div className="bg-yellow-50 border-2 border-yellow-300 rounded-2xl p-4 w-full">
-              <p className="font-bold text-yellow-900 mb-2">💡 Explanation</p>
-              <p className="text-yellow-800 text-sm">{answerExplanation}</p>
+            <div className="bg-yellow-50 border-2 border-yellow-300 rounded-2xl p-4 sm:p-5 w-full">
+              <p className="font-bold text-yellow-900 mb-2 text-lg sm:text-base">💡 Explanation</p>
+              <p className="text-yellow-800 text-base sm:text-sm leading-relaxed">{answerExplanation}</p>
             </div>
           )}
         </div>
@@ -694,13 +696,13 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
 
   return (
     <div className="flex flex-col min-h-screen bg-amber-50 items-center justify-center px-4">
-      <div className="bg-white rounded-2xl shadow-lg p-8 text-center max-w-md">
-        <div className="text-4xl mb-4">⚡</div>
-        <p className="text-xl font-bold text-gray-900">Loading multiplayer game...</p>
+      <div className="bg-white rounded-2xl shadow-lg p-8 sm:p-12 text-center max-w-md w-full">
+        <div className="text-5xl sm:text-6xl mb-4">⚡</div>
+        <p className="text-xl sm:text-2xl font-bold text-gray-900">Loading multiplayer game...</p>
         <div className="mt-6 flex justify-center gap-1">
-          <div className="w-2 h-2 bg-cyan-500 rounded-full animate-bounce"></div>
-          <div className="w-2 h-2 bg-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-          <div className="w-2 h-2 bg-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+          <div className="w-3 h-3 bg-cyan-500 rounded-full animate-bounce"></div>
+          <div className="w-3 h-3 bg-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+          <div className="w-3 h-3 bg-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
         </div>
       </div>
       {incomingRequestModal}

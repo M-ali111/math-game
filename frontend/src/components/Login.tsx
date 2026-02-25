@@ -27,11 +27,11 @@ export const Login: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuccess
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-amber-50 px-4">
-      <div className="bg-white rounded-2xl shadow-lg px-6 py-8 w-full max-w-md">
+      <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 w-full max-w-md mx-auto">
         <div className="text-center mb-8">
-          <div className="text-4xl mb-3">🧠</div>
-          <h1 className="text-3xl font-bold text-gray-900">ZirekIQ</h1>
-          <p className="text-gray-500 text-sm mt-2">Master Mathematics & Logic</p>
+          <div className="text-5xl sm:text-6xl mb-3">🧠</div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">ZirekIQ</h1>
+          <p className="text-gray-500 text-base sm:text-sm mt-2">Master Mathematics & Logic</p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -41,7 +41,7 @@ export const Login: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuccess
               placeholder="Username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400"
+              className="px-4 py-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400 text-base"
               required
             />
           )}
@@ -50,7 +50,7 @@ export const Login: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuccess
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400"
+            className="px-4 py-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400 text-base"
             required
           />
           <input
@@ -58,7 +58,7 @@ export const Login: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuccess
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400"
+            className="px-4 py-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-400 text-base"
             required
           />
           {error && <p className="text-red-500 text-center text-sm font-medium">{error}</p>}

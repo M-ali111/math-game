@@ -69,17 +69,17 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
     <div className="min-h-screen bg-gradient-to-br from-[#f5f5f0] to-[#e8e8dd] p-4">
       <div className="max-w-md mx-auto">
         {/* Header */}
-        <div className="text-center mb-6">
+        <div className="text-center mb-6 relative">
           {onBack && (
             <button
               onClick={onBack}
-              className="absolute left-4 top-4 p-2 rounded-full bg-white shadow-md hover:bg-gray-50 transition-colors"
+              className="absolute left-0 top-0 p-3 rounded-full bg-white shadow-md hover:bg-gray-50 active:bg-gray-100 transition-colors min-w-[48px] min-h-[48px] flex items-center justify-center"
             >
               <span className="text-2xl">←</span>
             </button>
           )}
-          <h1 className="text-4xl font-bold text-gray-800 mb-1">🏆 Leaderboard</h1>
-          <p className="text-sm text-gray-600">Based on Multiplayer Wins</p>
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-1">🏆 Leaderboard</h1>
+          <p className="text-base sm:text-sm text-gray-600">Based on Multiplayer Wins</p>
         </div>
 
         {/* Top 3 Podium */}
@@ -90,35 +90,35 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
               return (
                 <div
                   key={entry.id}
-                  className={`bg-gradient-to-r ${getPodiumColor(entry.rank)} rounded-2xl p-4 shadow-lg ${
+                  className={`bg-gradient-to-r ${getPodiumColor(entry.rank)} rounded-2xl p-4 sm:p-5 shadow-lg ${
                     isCurrentUser ? 'ring-4 ring-teal-400' : ''
                   }`}
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4">
                     {/* Medal Icon */}
-                    <div className="text-4xl flex-shrink-0">
+                    <div className="text-5xl sm:text-4xl flex-shrink-0">
                       {getMedalEmoji(entry.rank)}
                     </div>
 
                     {/* User Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <h3 className="text-lg font-bold truncate">
+                        <h3 className="text-lg sm:text-xl font-bold truncate">
                           {entry.username}
                           {isCurrentUser && <span className="text-xs ml-1">(You)</span>}
                         </h3>
                       </div>
-                      <p className="text-xs text-gray-600 mt-1">
+                      <p className="text-sm sm:text-xs text-gray-600 mt-1">
                         {entry.totalMultiplayerGames} game{entry.totalMultiplayerGames !== 1 ? 's' : ''} played
                       </p>
                     </div>
 
                     {/* Wins Badge */}
                     <div className="text-right flex-shrink-0">
-                      <div className="text-3xl font-bold">
+                      <div className="text-3xl sm:text-4xl font-bold">
                         {entry.totalMultiplayerWins}
                       </div>
-                      <div className="text-xs font-semibold">
+                      <div className="text-xs sm:text-sm font-semibold">
                         win{entry.totalMultiplayerWins !== 1 ? 's' : ''}
                       </div>
                     </div>
@@ -131,22 +131,22 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
 
         {/* Rest of Leaderboard */}
         {restOfList.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-lg p-4 max-h-[400px] overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-5 max-h-[400px] overflow-y-auto">
             <div className="space-y-2">
               {restOfList.map((entry) => {
                 const isCurrentUser = user?.id === entry.id;
                 return (
                   <div
                     key={entry.id}
-                    className={`p-3 rounded-xl transition-all ${
+                    className={`p-3 sm:p-4 rounded-xl transition-all ${
                       isCurrentUser
                         ? 'bg-gradient-to-r from-teal-100 to-teal-200 border-2 border-teal-400'
-                        : 'bg-gray-50 hover:bg-gray-100'
+                        : 'bg-gray-50 hover:bg-gray-100 active:bg-gray-200'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       {/* Rank */}
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold flex-shrink-0 ${
+                      <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-bold flex-shrink-0 text-base sm:text-lg ${
                         isCurrentUser ? 'bg-teal-500 text-white' : 'bg-gray-200 text-gray-700'
                       }`}>
                         {entry.rank}
@@ -154,18 +154,18 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
 
                       {/* User Info */}
                       <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-gray-800 truncate">
+                        <div className="font-semibold text-gray-800 truncate text-base">
                           {entry.username}
                           {isCurrentUser && <span className="text-xs text-teal-600 ml-1">(You)</span>}
                         </div>
-                        <p className="text-xs text-gray-500 mt-0.5">
+                        <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
                           {entry.totalMultiplayerGames} game{entry.totalMultiplayerGames !== 1 ? 's' : ''}
                         </p>
                       </div>
 
                       {/* Wins Badge */}
                       <div className="text-right flex-shrink-0">
-                        <div className="text-xl font-bold text-gray-800">
+                        <div className="text-xl sm:text-2xl font-bold text-gray-800">
                           {entry.totalMultiplayerWins}
                         </div>
                         <div className="text-xs text-gray-500">
@@ -183,9 +183,9 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
         {/* Empty State */}
         {leaderboard.length === 0 && (
           <div className="text-center py-12 bg-white rounded-2xl shadow-lg">
-            <div className="text-6xl mb-4">🏆</div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">No Players Yet</h3>
-            <p className="text-gray-600">Be the first to play and top the leaderboard!</p>
+            <div className="text-7xl sm:text-6xl mb-4">🏆</div>
+            <h3 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-2">No Players Yet</h3>
+            <p className="text-gray-600 text-base">Be the first to play and top the leaderboard!</p>
           </div>
         )}
       </div>

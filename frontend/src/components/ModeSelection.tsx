@@ -51,18 +51,18 @@ export const ModeSelection: React.FC<ModeSelectionProps> = ({ onModeSelect, onBa
       <div className="bg-white shadow-sm px-4 py-6 text-center flex items-center justify-between">
         <button 
           onClick={onBack}
-          className="text-cyan-500 hover:text-cyan-600 font-bold text-base"
+          className="text-cyan-500 hover:text-cyan-600 active:text-cyan-700 font-bold text-base sm:text-lg min-w-[60px] text-left"
         >
           ← {t.back}
         </button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-900">{t.selectMode}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{t.selectMode}</h1>
         </div>
-        <div className="w-8"></div>
+        <div className="w-[60px]"></div>
       </div>
 
       {/* Subject info */}
-      <div className={`${headerBgColor} text-center px-4 py-3 text-sm font-semibold`}>
+      <div className={`${headerBgColor} text-center px-4 py-3 text-base sm:text-sm font-semibold`}>
         {subject === 'math' ? '🔢 Mathematics' : '🧠 Logic & IQ'}
       </div>
 
@@ -74,11 +74,11 @@ export const ModeSelection: React.FC<ModeSelectionProps> = ({ onModeSelect, onBa
             <button
               key={mode.value}
               onClick={() => handleSelectMode(mode.value)}
-              className={`${buttonColor} rounded-2xl shadow-md p-6 text-center hover:shadow-lg transition-all duration-200 hover:scale-105`}
+              className={`${buttonColor} rounded-2xl shadow-md p-6 sm:p-8 text-center hover:shadow-lg active:opacity-90 transition-all duration-200 hover:scale-105 min-h-[140px] w-full`}
             >
-              <div className="text-4xl mb-3">{mode.icon}</div>
-              <h2 className="text-xl font-bold">{mode.label}</h2>
-              <p className="text-sm mt-2 opacity-90">{mode.description}</p>
+              <div className="text-5xl sm:text-4xl mb-3">{mode.icon}</div>
+              <h2 className="text-xl sm:text-2xl font-bold">{mode.label}</h2>
+              <p className="text-base sm:text-sm mt-2 opacity-90">{mode.description}</p>
             </button>
           ))}
         </div>
