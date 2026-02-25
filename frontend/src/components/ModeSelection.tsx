@@ -4,7 +4,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { translations } from '../utils/translations';
 
 interface ModeSelectionProps {
-  onModeSelect: (mode: GameMode) => void;
+  onModeSelect: (mode: GameMode | 'random') => void;
   onBack: () => void;
 }
 
@@ -14,7 +14,7 @@ export const ModeSelection: React.FC<ModeSelectionProps> = ({ onModeSelect, onBa
 
   const t = translations[language];
 
-  const modes: { value: GameMode; label: string; description: string; icon: string }[] = [
+  const modes: { value: GameMode | 'random'; label: string; description: string; icon: string }[] = [
     {
       value: 'solo',
       label: t.playSolo,
@@ -27,11 +27,23 @@ export const ModeSelection: React.FC<ModeSelectionProps> = ({ onModeSelect, onBa
       description: 'Compete with other players in real-time',
       icon: '🎮',
     },
+    {
+      value: 'random',
+      label: 'Play Random',
+      description: 'Get a random mix of both modes',
+      icon: '🎲',
+    },
   ];
 
-  const handleSelectMode = (mode: GameMode) => {
+  const handleSelectMode = (mode: GameMode | 'random') => {
     onModeSelect(mode);
   };
+
+  const isMath = subject === 'math';
+  const buttonColor = isMath 
+    ? 'bg-cyan-500 hover:bg-cyan-600 text-white' 
+    : 'bg-purple-500 hover:bg-purple-600 text-white';
+  const headerBgColor = isMath ? 'bg-cyan-50 text-cyan-700' : 'bg-purple-50 text-purple-700';
 
   return (
     <div className="flex flex-col min-h-screen bg-amber-50">
@@ -50,8 +62,8 @@ export const ModeSelection: React.FC<ModeSelectionProps> = ({ onModeSelect, onBa
       </div>
 
       {/* Subject info */}
-      <div className="bg-cyan-50 text-center px-4 py-3 text-sm font-semibold text-cyan-700">
-        {subject === 'math' ? t.mathematics : t.logicIQ}
+      <div className={`${headerBgColor} text-center px-4 py-3 text-sm font-semibold`}>
+        {subject === 'math' ? '🔢 Mathematics' : '🧠 Logic & IQ'}
       </div>
 
       {/* Main content */}
@@ -62,11 +74,11 @@ export const ModeSelection: React.FC<ModeSelectionProps> = ({ onModeSelect, onBa
             <button
               key={mode.value}
               onClick={() => handleSelectMode(mode.value)}
-              className="bg-white rounded-2xl shadow-md p-6 text-center hover:shadow-lg transition-all duration-200 hover:scale-105"
+              className={`${buttonColor} rounded-2xl shadow-md p-6 text-center hover:shadow-lg transition-all duration-200 hover:scale-105`}
             >
               <div className="text-4xl mb-3">{mode.icon}</div>
-              <h2 className="text-xl font-bold text-gray-900">{mode.label}</h2>
-              <p className="text-sm text-gray-600 mt-2">{mode.description}</p>
+              <h2 className="text-xl font-bold">{mode.label}</h2>
+              <p className="text-sm mt-2 opacity-90">{mode.description}</p>
             </button>
           ))}
         </div>

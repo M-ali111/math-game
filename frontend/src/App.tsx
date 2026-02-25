@@ -3,8 +3,8 @@ import { useAuth } from './context/AuthContext';
 import { useGame } from './context/GameContext';
 import { Login } from './components/Login';
 import { GameMenu } from './components/GameMenu';
-import { SubjectSelection } from './components/SubjectSelection';
 import { ModeSelection } from './components/ModeSelection';
+import { GradeSelector } from './components/GradeSelector';
 import { SoloGame } from './components/SoloGame';
 import { MultiplayerGame } from './components/MultiplayerGame';
 import { Stats } from './components/Stats';
@@ -13,8 +13,8 @@ import Leaderboard from './components/Leaderboard';
 type AppState = 
   | 'login' 
   | 'menu' 
-  | 'subject-selection' 
   | 'mode-selection'
+  | 'grade-selection'
   | 'solo' 
   | 'multiplayer' 
   | 'stats'
@@ -22,8 +22,9 @@ type AppState =
 
 const AppContent: React.FC = () => {
   const [appState, setAppState] = useState<AppState>('login');
+  const [selectedGameMode, setSelectedGameMode] = useState<'solo' | 'multiplayer' | 'random' | null>(null);
   const { user, token, logout } = useAuth();
-  const { subject, resetGameFlow } = useGame();
+  const { subject, setSubject, setSelectedMode, setSelectedGrade, resetGameFlow } = useGame();
 
   useEffect(() => {
     if (token && user) {
@@ -39,38 +40,53 @@ const AppContent: React.FC = () => {
     setAppState('login');
   };
 
-  const handleSelectMode = (mode: string) => {
-    if (mode === 'solo') {
-      setAppState('subject-selection');
-    } else if (mode === 'multiplayer') {
-      setAppState('subject-selection');
-    } else if (mode === 'stats') {
+  const handleSelectSubject = (selectedSubject: 'math' | 'logic') => {
+    setSubject(selectedSubject);
+    setAppState('mode-selection');
+  };
+
+  const handleSelectNav = (nav: 'stats' | 'leaderboard') => {
+    if (nav === 'stats') {
       setAppState('stats');
-    } else if (mode === 'leaderboard') {
+    } else if (nav === 'leaderboard') {
       setAppState('leaderboard');
     }
   };
 
-  const handleModeSelected = (mode: 'solo' | 'multiplayer') => {
-    if (mode === 'solo') {
-      // For logic, skip grade selection; for math, show grade selection
-      if (subject === 'logic') {
+  const handleModeSelected = (mode: 'solo' | 'multiplayer' | 'random') => {
+    setSelectedGameMode(mode);
+    const actualMode = mode === 'random' ? 'solo' : mode; // Convert random to solo for context
+    setSelectedMode(actualMode);
+    
+    // If Math subject, show grade selection
+    if (subject === 'math') {
+      setAppState('grade-selection');
+    } else if (subject === 'logic') {
+      // If Logic, skip grade selection and go straight to the game
+      if (mode === 'solo' || mode === 'random') {
         setAppState('solo');
-      } else {
-        setAppState('solo');
-      }
-    } else {
-      // For logic, skip grade selection; for math, show grade selection
-      if (subject === 'logic') {
-        setAppState('multiplayer');
       } else {
         setAppState('multiplayer');
       }
     }
   };
 
+  const handleGradeSelected = (grade: number) => {
+    setSelectedGrade(grade as any);
+    // After grade selection, go to the game
+    if (selectedGameMode === 'solo' || selectedGameMode === 'random') {
+      setAppState('solo');
+    } else {
+      setAppState('multiplayer');
+    }
+  };
+
   const handleBackFromModeSelection = () => {
-    setAppState('subject-selection');
+    setAppState('menu');
+  };
+
+  const handleBackFromGradeSelection = () => {
+    setAppState('mode-selection');
   };
 
   const handleBack = () => {
@@ -82,18 +98,22 @@ const AppContent: React.FC = () => {
     <div>
       {appState === 'login' && <Login onLoginSuccess={() => setAppState('menu')} />}
       {appState === 'menu' && (
-        <GameMenu onSelectMode={handleSelectMode} onLogout={handleLogout} />
-      )}
-      {appState === 'subject-selection' && (
-        <SubjectSelection 
-          onSubjectSelected={() => setAppState('mode-selection')}
-          onBack={() => setAppState('menu')}
+        <GameMenu 
+          onSelectSubject={handleSelectSubject}
+          onSelectNav={handleSelectNav}
+          onLogout={handleLogout}
         />
       )}
       {appState === 'mode-selection' && subject && (
         <ModeSelection 
           onModeSelect={handleModeSelected}
           onBack={handleBackFromModeSelection}
+        />
+      )}
+      {appState === 'grade-selection' && subject === 'math' && (
+        <GradeSelector 
+          onSelect={handleGradeSelected}
+          onBack={handleBackFromGradeSelection}
         />
       )}
       {appState === 'solo' && <SoloGame onBack={handleBack} />}

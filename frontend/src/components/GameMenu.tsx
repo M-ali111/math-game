@@ -1,17 +1,14 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
-import { translations } from '../utils/translations';
 
 interface GameMenuProps {
-  onSelectMode: (mode: 'solo' | 'multiplayer' | 'stats' | 'leaderboard') => void;
+  onSelectSubject: (subject: 'math' | 'logic') => void;
+  onSelectNav: (nav: 'stats' | 'leaderboard') => void;
   onLogout: () => void;
 }
 
-export const GameMenu: React.FC<GameMenuProps> = ({ onSelectMode, onLogout }) => {
+export const GameMenu: React.FC<GameMenuProps> = ({ onSelectSubject, onSelectNav, onLogout }) => {
   const { user } = useAuth();
-  const { language } = useLanguage();
-  const t = translations[language];
 
   return (
     <div className="flex flex-col min-h-screen bg-amber-50">
@@ -35,28 +32,28 @@ export const GameMenu: React.FC<GameMenuProps> = ({ onSelectMode, onLogout }) =>
           </div>
         </div>
 
-        {/* Three main mode buttons stacked */}
+        {/* Subject selection buttons */}
         <div className="w-full flex flex-col gap-4">
           <button
-            onClick={() => onSelectMode('solo')}
+            onClick={() => onSelectSubject('math')}
             className="w-full bg-cyan-500 hover:bg-cyan-600 text-white rounded-2xl py-6 px-4 text-center transition-colors shadow-md"
           >
-            <div className="text-3xl mb-2">👤</div>
-            <h2 className="text-xl font-bold">{t.playSolo}</h2>
-            <p className="text-sm mt-2 text-cyan-100">Practice & improve your skills</p>
+            <div className="text-3xl mb-2">🔢</div>
+            <h2 className="text-xl font-bold">Mathematics</h2>
+            <p className="text-sm mt-2 text-cyan-100">Algebra, Fractions & More</p>
           </button>
 
           <button
-            onClick={() => onSelectMode('multiplayer')}
+            onClick={() => onSelectSubject('logic')}
             className="w-full bg-purple-500 hover:bg-purple-600 text-white rounded-2xl py-6 px-4 text-center transition-colors shadow-md"
           >
-            <div className="text-3xl mb-2">🎮</div>
-            <h2 className="text-xl font-bold">{t.multiplayer}</h2>
-            <p className="text-sm mt-2 text-purple-100">Compete in real-time</p>
+            <div className="text-3xl mb-2">🧠</div>
+            <h2 className="text-xl font-bold">Logic & IQ</h2>
+            <p className="text-sm mt-2 text-purple-100">Patterns, Reasoning & Puzzles</p>
           </button>
 
           <button
-            onClick={() => onSelectMode('stats')}
+            onClick={() => onSelectNav('stats')}
             className="w-full bg-indigo-500 hover:bg-indigo-600 text-white rounded-2xl py-6 px-4 text-center transition-colors shadow-md"
           >
             <div className="text-3xl mb-2">📊</div>
@@ -74,14 +71,14 @@ export const GameMenu: React.FC<GameMenuProps> = ({ onSelectMode, onLogout }) =>
             <span>Home</span>
           </button>
           <button 
-            onClick={() => onSelectMode('leaderboard')}
+            onClick={() => onSelectNav('leaderboard')}
             className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-600 font-semibold text-sm"
           >
             <span className="text-xl">🏆</span>
             <span>Leaderboard</span>
           </button>
           <button 
-            onClick={() => onSelectMode('stats')}
+            onClick={() => onSelectNav('stats')}
             className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-600 font-semibold text-sm"
           >
             <span className="text-xl">📈</span>
