@@ -422,12 +422,6 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
             </div>
           )}
 
-          {selectedGrade !== null && (
-            <div className="w-full bg-cyan-50 border-2 border-cyan-300 text-cyan-900 px-4 py-3 rounded-xl mb-6 font-semibold text-center text-base">
-              Grade: {selectedGrade}
-            </div>
-          )}
-
           {onlineUsers.length === 0 ? (
             <div className="w-full bg-white rounded-2xl shadow-md p-8 text-center">
               <div className="text-5xl sm:text-6xl mb-4">😴</div>
