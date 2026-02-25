@@ -506,101 +506,57 @@ export const gameService = {
    * Get leaderboard
    */
   async getLeaderboard(limit: number = 100) {
-    const users = await prisma.user.findMany({
-      orderBy: { totalWins: 'desc' },
-      take: limit,
+    // Get all users
+    const allUsers = await prisma.user.findMany({
       select: {
         id: true,
         username: true,
-        totalWins: true,
-        totalGamesPlayed: true,
       },
     });
 
-    // Calculate additional stats for each user
-    const leaderboard = await Promise.all(
-      users.map(async (user, index) => {
-        // Calculate win rate
-        const winRate = user.totalGamesPlayed > 0 
-          ? Math.round((user.totalWins / user.totalGamesPlayed) * 1000) / 10 
-          : 0;
-
-        // Get completed games for streak calculation
-        const completedGames = await prisma.gamePlayer.findMany({
-          where: { 
+    // Calculate multiplayer wins and games for each user
+    const leaderboardData = await Promise.all(
+      allUsers.map(async (user) => {
+        // Get all multiplayer games where this user participated
+        const multiplayerGames = await prisma.gamePlayer.findMany({
+          where: {
             userId: user.id,
-            completedAt: { not: null }
+            game: {
+              gameType: 'multiplayer',
+              status: 'completed'
+            }
           },
           include: {
-            game: {
-              select: { gameType: true, createdAt: true, subject: true }
-            }
-          },
-          orderBy: { completedAt: 'desc' }
+            game: true
+          }
         });
 
-        // Calculate current streak
-        let currentStreak = 0;
-        if (completedGames.length > 0) {
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          
-          let checkDate = new Date(today);
-          const gamesByDate = new Map<string, boolean>();
-          
-          completedGames.forEach(game => {
-            if (game.completedAt) {
-              const dateKey = game.completedAt.toISOString().slice(0, 10);
-              gamesByDate.set(dateKey, true);
-            }
-          });
-          
-          // Check if played today or yesterday
-          const todayKey = today.toISOString().slice(0, 10);
-          const yesterday = new Date(today);
-          yesterday.setDate(yesterday.getDate() - 1);
-          const yesterdayKey = yesterday.toISOString().slice(0, 10);
-          
-          if (!gamesByDate.has(todayKey) && !gamesByDate.has(yesterdayKey)) {
-            currentStreak = 0;
-          } else {
-            // Start from today if played today, else yesterday
-            if (!gamesByDate.has(todayKey)) {
-              checkDate = yesterday;
-            }
-            
-            while (gamesByDate.has(checkDate.toISOString().slice(0, 10))) {
-              currentStreak++;
-              checkDate.setDate(checkDate.getDate() - 1);
-            }
-          }
-        }
-
-        // Calculate subject preference
-        const subjectCount = completedGames.reduce((acc, game) => {
-          const subject = game.game.subject || 'math';
-          acc[subject] = (acc[subject] || 0) + 1;
-          return acc;
-        }, {} as Record<string, number>);
-
-        let subjectPreference = 'math';
-        if (subjectCount['logic'] && (!subjectCount['math'] || subjectCount['logic'] > subjectCount['math'])) {
-          subjectPreference = 'logic';
-        }
+        // Count wins (isWinner = true)
+        const totalMultiplayerWins = multiplayerGames.filter(gp => gp.isWinner).length;
+        const totalMultiplayerGames = multiplayerGames.length;
 
         return {
-          rank: index + 1,
           id: user.id,
           username: user.username,
-          totalWins: user.totalWins,
-          totalGames: user.totalGamesPlayed,
-          winRate,
-          currentStreak,
-          subject: subjectPreference
+          totalMultiplayerWins,
+          totalMultiplayerGames
         };
       })
     );
 
-    return leaderboard;
+    // Sort by wins descending, then by username ascending
+    const sortedLeaderboard = leaderboardData
+      .sort((a, b) => {
+        if (b.totalMultiplayerWins !== a.totalMultiplayerWins) {
+          return b.totalMultiplayerWins - a.totalMultiplayerWins;
+        }
+        return a.username.localeCompare(b.username);
+      })
+      .map((entry, index) => ({
+        rank: index + 1,
+        ...entry
+      }));
+
+    return sortedLeaderboard;
   },
 };

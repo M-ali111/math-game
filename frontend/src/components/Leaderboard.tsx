@@ -6,25 +6,19 @@ interface LeaderboardEntry {
   rank: number;
   id: string;
   username: string;
-  totalWins: number;
-  totalGames: number;
-  winRate: number;
-  currentStreak: number;
-  subject: string;
+  totalMultiplayerWins: number;
+  totalMultiplayerGames: number;
 }
 
 interface LeaderboardProps {
   onBack?: () => void;
 }
 
-type SortMode = 'wins' | 'winRate';
-
 const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
   const { user } = useAuth();
   const { request } = useApi();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sortMode, setSortMode] = useState<SortMode>('wins');
 
   const fetchLeaderboard = async () => {
     try {
@@ -40,43 +34,28 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
   useEffect(() => {
     fetchLeaderboard();
     
-    // Auto-refresh every 30 seconds
-    const interval = setInterval(fetchLeaderboard, 30000);
+    // Auto-refresh every 60 seconds
+    const interval = setInterval(fetchLeaderboard, 60000);
     
     return () => clearInterval(interval);
   }, []);
 
-  const getSortedLeaderboard = () => {
-    if (sortMode === 'winRate') {
-      return [...leaderboard].sort((a, b) => {
-        if (b.winRate !== a.winRate) return b.winRate - a.winRate;
-        return b.totalWins - a.totalWins;
-      }).map((entry, index) => ({ ...entry, rank: index + 1 }));
-    }
-    return leaderboard;
-  };
-
-  const getPodiumColor = (rank: number) => {
-    if (rank === 1) return 'from-yellow-400 to-yellow-500';
-    if (rank === 2) return 'from-gray-300 to-gray-400';
-    if (rank === 3) return 'from-amber-600 to-amber-700';
-    return 'from-gray-100 to-gray-200';
-  };
-
-  const getPodiumIcon = (rank: number) => {
+  const getMedalEmoji = (rank: number) => {
     if (rank === 1) return '👑';
     if (rank === 2) return '🥈';
     if (rank === 3) return '🥉';
     return '';
   };
 
-  const getSubjectEmoji = (subject: string) => {
-    return subject === 'math' ? '🔢' : '🧠';
+  const getPodiumColor = (rank: number) => {
+    if (rank === 1) return 'from-yellow-300 to-yellow-400 text-gray-900';
+    if (rank === 2) return 'from-gray-300 to-gray-400 text-gray-900';
+    if (rank === 3) return 'from-orange-400 to-orange-500 text-white';
+    return 'from-white to-gray-50 text-gray-900';
   };
 
-  const sortedData = getSortedLeaderboard();
-  const topThree = sortedData.slice(0, 3);
-  const restOfList = sortedData.slice(3);
+  const topThree = leaderboard.slice(0, 3);
+  const restOfList = leaderboard.slice(3);
 
   if (loading) {
     return (
@@ -99,32 +78,8 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
               <span className="text-2xl">←</span>
             </button>
           )}
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">🏆 Leaderboard</h1>
-          <p className="text-gray-600">Top players and their achievements</p>
-        </div>
-
-        {/* Sort Tabs */}
-        <div className="flex gap-2 mb-6">
-          <button
-            onClick={() => setSortMode('wins')}
-            className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all ${
-              sortMode === 'wins'
-                ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-white shadow-lg'
-                : 'bg-white text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            🏅 Most Wins
-          </button>
-          <button
-            onClick={() => setSortMode('winRate')}
-            className={`flex-1 py-3 px-4 rounded-xl font-semibold transition-all ${
-              sortMode === 'winRate'
-                ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-white shadow-lg'
-                : 'bg-white text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            🎯 Best Accuracy
-          </button>
+          <h1 className="text-4xl font-bold text-gray-800 mb-1">🏆 Leaderboard</h1>
+          <p className="text-sm text-gray-600">Based on Multiplayer Wins</p>
         </div>
 
         {/* Top 3 Podium */}
@@ -136,42 +91,36 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
                 <div
                   key={entry.id}
                   className={`bg-gradient-to-r ${getPodiumColor(entry.rank)} rounded-2xl p-4 shadow-lg ${
-                    isCurrentUser ? 'ring-4 ring-cyan-400' : ''
+                    isCurrentUser ? 'ring-4 ring-teal-400' : ''
                   }`}
                 >
                   <div className="flex items-center gap-4">
-                    {/* Rank Badge */}
-                    <div className="text-4xl">
-                      {getPodiumIcon(entry.rank)}
+                    {/* Medal Icon */}
+                    <div className="text-4xl flex-shrink-0">
+                      {getMedalEmoji(entry.rank)}
                     </div>
 
                     {/* User Info */}
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <h3 className="text-lg font-bold text-gray-800">
+                        <h3 className="text-lg font-bold truncate">
                           {entry.username}
-                          {isCurrentUser && <span className="text-sm ml-1">(You)</span>}
+                          {isCurrentUser && <span className="text-xs ml-1">(You)</span>}
                         </h3>
-                        <span className="text-xl">{getSubjectEmoji(entry.subject)}</span>
                       </div>
-                      <div className="flex gap-4 mt-1 text-sm text-gray-700">
-                        <span className="font-semibold">
-                          {sortMode === 'wins' ? `${entry.totalWins} wins` : `${entry.winRate}% accuracy`}
-                        </span>
-                        <span>•</span>
-                        <span>{entry.totalGames} games</span>
-                        {entry.currentStreak > 0 && (
-                          <>
-                            <span>•</span>
-                            <span>🔥 {entry.currentStreak} days</span>
-                          </>
-                        )}
-                      </div>
+                      <p className="text-xs text-gray-600 mt-1">
+                        {entry.totalMultiplayerGames} game{entry.totalMultiplayerGames !== 1 ? 's' : ''} played
+                      </p>
                     </div>
 
-                    {/* Rank Number */}
-                    <div className="text-3xl font-bold text-gray-700">
-                      #{entry.rank}
+                    {/* Wins Badge */}
+                    <div className="text-right flex-shrink-0">
+                      <div className="text-3xl font-bold">
+                        {entry.totalMultiplayerWins}
+                      </div>
+                      <div className="text-xs font-semibold">
+                        win{entry.totalMultiplayerWins !== 1 ? 's' : ''}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -191,49 +140,36 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
                     key={entry.id}
                     className={`p-3 rounded-xl transition-all ${
                       isCurrentUser
-                        ? 'bg-gradient-to-r from-cyan-100 to-cyan-200 border-2 border-cyan-400'
+                        ? 'bg-gradient-to-r from-teal-100 to-teal-200 border-2 border-teal-400'
                         : 'bg-gray-50 hover:bg-gray-100'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       {/* Rank */}
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
-                        isCurrentUser ? 'bg-cyan-500 text-white' : 'bg-gray-200 text-gray-700'
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold flex-shrink-0 ${
+                        isCurrentUser ? 'bg-teal-500 text-white' : 'bg-gray-200 text-gray-700'
                       }`}>
                         {entry.rank}
                       </div>
 
                       {/* User Info */}
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-gray-800">
-                            {entry.username}
-                            {isCurrentUser && <span className="text-sm text-cyan-600 ml-1">(You)</span>}
-                          </span>
-                          <span>{getSubjectEmoji(entry.subject)}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-gray-800 truncate">
+                          {entry.username}
+                          {isCurrentUser && <span className="text-xs text-teal-600 ml-1">(You)</span>}
                         </div>
-                        <div className="flex gap-3 text-xs text-gray-600 mt-0.5">
-                          <span className="font-medium">
-                            {sortMode === 'wins' ? `${entry.totalWins}W` : `${entry.winRate}%`}
-                          </span>
-                          <span>•</span>
-                          <span>{entry.totalGames}G</span>
-                          {entry.currentStreak > 0 && (
-                            <>
-                              <span>•</span>
-                              <span>🔥{entry.currentStreak}d</span>
-                            </>
-                          )}
-                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {entry.totalMultiplayerGames} game{entry.totalMultiplayerGames !== 1 ? 's' : ''}
+                        </p>
                       </div>
 
-                      {/* Stats Badge */}
-                      <div className="text-right">
-                        <div className="text-sm font-bold text-gray-700">
-                          {sortMode === 'wins' ? entry.totalWins : `${entry.winRate}%`}
+                      {/* Wins Badge */}
+                      <div className="text-right flex-shrink-0">
+                        <div className="text-xl font-bold text-gray-800">
+                          {entry.totalMultiplayerWins}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {sortMode === 'wins' ? 'wins' : 'rate'}
+                          win{entry.totalMultiplayerWins !== 1 ? 's' : ''}
                         </div>
                       </div>
                     </div>
@@ -258,3 +194,4 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ onBack }) => {
 };
 
 export default Leaderboard;
+
