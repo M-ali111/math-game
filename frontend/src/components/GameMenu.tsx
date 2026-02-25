@@ -11,14 +11,14 @@ export const GameMenu: React.FC<GameMenuProps> = ({ onSelectSubject, onSelectNav
   const { user } = useAuth();
 
   return (
-    <div className="flex flex-col min-h-screen bg-amber-50">
+    <div className="flex flex-col min-h-screen bg-amber-50 overflow-y-auto">
       {/* Header with logo and user info */}
       <div className="bg-white shadow-sm px-4 py-6 text-center">
         <div className="text-5xl sm:text-6xl mb-2">⚡</div>
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">ZirekIQ</h1>
         <p className="text-gray-500 text-base sm:text-sm mt-1">Master Mathematics & Logic</p>
       </div>
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 max-w-md mx-auto w-full">
+      <div className="flex-1 flex flex-col items-center px-4 py-8 pb-28 max-w-md mx-auto w-full">
         {/* User greeting */}
         <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6 w-full mb-6 text-center">
           <p className="text-lg sm:text-xl font-bold text-gray-900">Welcome, {user?.username}! 👋</p>
@@ -62,7 +62,7 @@ export const GameMenu: React.FC<GameMenuProps> = ({ onSelectSubject, onSelectNav
       </div>
 
       {/* Bottom navigation bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 safe-area-inset-bottom">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 px-4 py-3 safe-area-inset-bottom">
         <div className="max-w-md mx-auto flex justify-around">
           <button className="flex flex-col items-center gap-1 text-cyan-500 hover:text-cyan-600 active:text-cyan-700 font-semibold text-xs sm:text-sm min-w-[60px]">
             <span className="text-2xl sm:text-xl">🏠</span>
