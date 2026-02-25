@@ -123,6 +123,7 @@ async function getNisBilQuestions(params: {
   difficulty: NisBilDifficulty;
   language: QuestionLanguage;
   subject: QuestionSubject;
+  difficultyValue?: number;
 }): Promise<NisBilQuestion[]> {
   const gradeLabel = getGradeLabel(params.grade);
   const topic = pickTopic(params.grade, params.subject);
@@ -133,6 +134,7 @@ async function getNisBilQuestions(params: {
     topic,
     language: params.language,
     subject: params.subject,
+    difficultyValue: params.difficultyValue,
   });
 }
 
@@ -218,6 +220,7 @@ export const gameService = {
       difficulty: adaptiveDifficulty.label,
       language,
       subject,
+      difficultyValue: adaptiveDifficulty.value,
     });
 
     for (let i = 0; i < aiQuestions.length; i++) {
@@ -439,6 +442,7 @@ export const gameService = {
           difficulty: difficultyLabel,
           language,
           subject: gameSubject,
+          difficultyValue: game.difficulty,
         });
 
         for (let i = 0; i < aiQuestions.length; i++) {

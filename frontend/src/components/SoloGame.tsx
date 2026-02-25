@@ -66,7 +66,10 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
       setGameStarted(true);
       setTimeStarted(Date.now());
     } catch (error: any) {
-      alert(error.message);
+      // Log error for debugging on frontend console
+      console.error('Failed to start game:', error);
+      // Show user-friendly message instead of technical error
+      alert('Unable to start game. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }

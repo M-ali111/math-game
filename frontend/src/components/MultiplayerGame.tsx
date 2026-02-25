@@ -177,7 +177,10 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
       setMode('waiting');
       socket?.emit('join_game', data.gameId);
     } catch (error: any) {
-      alert(error.message);
+      // Log error for debugging on frontend console
+      console.error('Failed to create game:', error);
+      // Show user-friendly message instead of technical error
+      alert('Unable to create game. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -211,7 +214,10 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
         setTimeStarted(Date.now());
       }
     } catch (error: any) {
-      alert(error.message);
+      // Log error for debugging on frontend console
+      console.error('Failed to join game:', error);
+      // Show user-friendly message instead of technical error
+      alert('Unable to join game. Please check the game ID and try again.');
     } finally {
       setLoading(false);
     }

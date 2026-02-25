@@ -62,7 +62,10 @@ const GROQ_SYSTEM_PROMPT_MATH =
   '(Nazarbayev Intellectual Schools) and BIL school admission tests. ' +
   'Generate questions that match the exact style, difficulty, and format ' +
   'of real NIS/BIL entrance exams. Questions should test logical thinking, ' +
-  'not just memorization. Always respond with valid JSON only, no extra text.';
+  'not just memorization. ' +
+  'CRITICAL: You MUST respond with ONLY a valid JSON array. ' +
+  'No explanations, no markdown, no backticks, no extra text. ' +
+  'Start your response with [ and end with ]';
 
 const GROQ_SYSTEM_PROMPT_LOGIC =
   'You are an expert at creating Logic and IQ questions for Kazakhstan ' +
@@ -71,7 +74,9 @@ const GROQ_SYSTEM_PROMPT_LOGIC =
   'logical reasoning (if-then, true/false deductions), analogy questions (A is to B as C is to ?), ' +
   'odd one out, matrix reasoning, and word logic puzzles. ' +
   'These should match the exact style of real NIS/BIL entrance exam logic sections. ' +
-  'Always respond with valid JSON only, no extra text.';
+  'CRITICAL: You MUST respond with ONLY a valid JSON array. ' +
+  'No explanations, no markdown, no backticks, no extra text. ' +
+  'Start your response with [ and end with ]';
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || '' });
 
@@ -659,6 +664,85 @@ function getLanguageLabel(language: QuestionLanguage): string {
   return 'English';
 }
 
+/**
+ * Clean Groq response to extract valid JSON
+ * Removes markdown backticks and text before/after JSON
+ */
+function cleanJsonResponse(raw: string): string {
+  let cleaned = raw.trim();
+  
+  // Remove markdown code blocks (```json and ```)
+  cleaned = cleaned.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+  
+  // Find the first [ and last ]
+  const firstBracket = cleaned.indexOf('[');
+  const lastBracket = cleaned.lastIndexOf(']');
+  
+  if (firstBracket === -1 || lastBracket === -1) {
+    throw new Error('No JSON array found in response');
+  }
+  
+  // Extract only the JSON portion
+  cleaned = cleaned.substring(firstBracket, lastBracket + 1);
+  
+  return cleaned;
+}
+
+/**
+ * Sleep for a given number of milliseconds
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Get fallback questions from the database
+ */
+async function getFallbackQuestionsFromDatabase(
+  difficulty: number,
+  count: number,
+  subject: QuestionSubject
+): Promise<NisBilQuestion[]> {
+  const { PrismaClient } = await import('@prisma/client');
+  const prisma = new PrismaClient();
+  
+  try {
+    // Get questions from database with matching difficulty and subject
+    const questions = await prisma.question.findMany({
+      where: {
+        difficulty: { gte: Math.max(1, difficulty - 2), lte: Math.min(10, difficulty + 2) },
+        subject: subject,
+      },
+      take: count,
+      orderBy: { id: 'desc' },
+    });
+    
+    // If not enough questions, get any available
+    if (questions.length < count) {
+      const additional = await prisma.question.findMany({
+        where: { subject: subject },
+        take: count - questions.length,
+        orderBy: { id: 'desc' },
+      });
+      questions.push(...additional);
+    }
+    
+    // Convert Prisma questions to NisBilQuestion format
+    return questions.slice(0, count).map(q => ({
+      question: q.text,
+      options: JSON.parse(q.options),
+      correctAnswer: JSON.parse(q.options)[q.correctAnswer],
+      topic: 'Database Fallback',
+      grade: 'General',
+      difficulty: difficulty > 6 ? 'hard' : difficulty > 3 ? 'medium' : 'easy',
+      explanation: q.explanation ?? '',
+    }));
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+
 function buildGroqUserPrompt(params: {
   count: number;
   gradeLabel: string;
@@ -690,8 +774,52 @@ function buildGroqUserPrompt(params: {
     '    difficulty: easy | medium | hard,\n' +
     '    explanation: string\n' +
     '  }\n' +
-    ']'
+    ']\n' +
+    'Remember: respond with ONLY the JSON array, nothing else. No markdown, no backticks, no explanations.'
   );
+}
+
+/**
+ * Create Groq completion with retry logic
+ * Retries up to 3 times with 1 second delay between retries
+ */
+async function createGroqCompletionWithRetry(
+  messages: Array<{ role: 'system' | 'user'; content: string }>,
+  useResponseFormat: boolean,
+  retries = 3
+) {
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      const payload: any = {
+        model: GROQ_MODEL,
+        messages,
+        temperature: 0.7,
+        max_tokens: 2000,
+      };
+
+      if (useResponseFormat) {
+        payload.response_format = { type: 'json_object' };
+      }
+
+      const result = await groq.chat.completions.create(payload);
+      return result;
+    } catch (error: any) {
+      // If this was a json_object format error, retry without format
+      if (useResponseFormat && attempt === 0) {
+        return createGroqCompletionWithRetry(messages, false, 3);
+      }
+      
+      // Log the error for debugging
+      console.error(`Groq API attempt ${attempt + 1}/${retries} failed:`, error.message);
+      
+      // Wait before retrying (except on last attempt)
+      if (attempt < retries - 1) {
+        await sleep(1000);
+      }
+    }
+  }
+
+  throw new Error('Groq API failed after 3 retries');
 }
 
 async function createGroqCompletion(messages: Array<{ role: 'system' | 'user'; content: string }>, useResponseFormat: boolean) {
@@ -717,11 +845,14 @@ async function createGroqCompletion(messages: Array<{ role: 'system' | 'user'; c
 }
 
 function parseGroqQuestions(raw: string): NisBilQuestion[] {
+  // Clean the response first
+  const cleanedRaw = cleanJsonResponse(raw);
+  
   let parsed: any;
   try {
-    parsed = JSON.parse(raw);
+    parsed = JSON.parse(cleanedRaw);
   } catch (error) {
-    throw new Error('Groq returned invalid JSON');
+    throw new Error('Groq returned invalid JSON after cleaning');
   }
 
   const questions = Array.isArray(parsed) ? parsed : parsed?.questions || parsed?.items;
@@ -772,26 +903,70 @@ export async function generateNisBilQuestions(params: {
   topic: string;
   language: QuestionLanguage;
   subject: QuestionSubject;
+  difficultyValue?: number; // Numeric difficulty for fallback purposes
 }) {
   ensureGroqConfigured();
 
-  const userPrompt = buildGroqUserPrompt(params);
+  const userPrompt = buildGroqUserPrompt({
+    count: params.count,
+    gradeLabel: params.gradeLabel,
+    difficulty: params.difficulty,
+    topic: params.topic,
+    language: params.language,
+    subject: params.subject,
+  });
   const systemPrompt = params.subject === 'logic' 
     ? `${GROQ_SYSTEM_PROMPT_LOGIC} ${getLanguageInstruction(params.language)}`
     : `${GROQ_SYSTEM_PROMPT_MATH} ${getLanguageInstruction(params.language)}`;
   
-  const completion = await createGroqCompletion(
-    [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt },
-    ],
-    true
-  );
+  try {
+    // Try to get questions from Groq with retry logic
+    const completion = await createGroqCompletionWithRetry(
+      [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      true
+    );
 
-  const content = completion?.choices?.[0]?.message?.content;
-  if (!content || typeof content !== 'string') {
-    throw new Error('Groq returned an empty response');
+    const content = completion?.choices?.[0]?.message?.content;
+    if (!content || typeof content !== 'string') {
+      throw new Error('Groq returned an empty response');
+    }
+
+    return parseGroqQuestions(content);
+  } catch (error: any) {
+    // Log the error for backend debugging
+    console.error('Groq question generation failed, falling back to database:', {
+      error: error.message,
+      params: {
+        gradeLabel: params.gradeLabel,
+        difficulty: params.difficulty,
+        topic: params.topic,
+        language: params.language,
+        subject: params.subject,
+      },
+      timestamp: new Date().toISOString(),
+    });
+
+    // Fallback to database questions silently
+    try {
+      const difficultyValue = params.difficultyValue || (params.difficulty === 'hard' ? 9 : params.difficulty === 'medium' ? 6 : 3);
+      const fallbackQuestions = await getFallbackQuestionsFromDatabase(
+        difficultyValue,
+        params.count,
+        params.subject
+      );
+      
+      if (fallbackQuestions.length > 0) {
+        console.log(`Fallback successful: retrieved ${fallbackQuestions.length} questions from database`);
+        return fallbackQuestions;
+      }
+      
+      throw new Error('No fallback questions available');
+    } catch (fallbackError: any) {
+      console.error('Fallback to database also failed:', fallbackError.message);
+      throw new Error('Unable to generate or retrieve questions. Please try again later.');
+    }
   }
-
-  return parseGroqQuestions(content);
 }
