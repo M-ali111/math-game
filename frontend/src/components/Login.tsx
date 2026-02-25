@@ -30,7 +30,7 @@ export const Login: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuccess
       <div className="bg-white rounded-2xl shadow-lg px-6 py-8 w-full max-w-md">
         <div className="text-center mb-8">
           <div className="text-4xl mb-3">🧠</div>
-          <h1 className="text-3xl font-bold text-gray-900">Math Game</h1>
+          <h1 className="text-3xl font-bold text-gray-900">ZirekIQ</h1>
           <p className="text-gray-500 text-sm mt-2">Master Mathematics & Logic</p>
         </div>
 

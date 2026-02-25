@@ -15,11 +15,9 @@ export const GameMenu: React.FC<GameMenuProps> = ({ onSelectSubject, onSelectNav
       {/* Header with logo and user info */}
       <div className="bg-white shadow-sm px-4 py-6 text-center">
         <div className="text-5xl mb-2">⚡</div>
-        <h1 className="text-2xl font-bold text-gray-900">Math Game</h1>
+        <h1 className="text-2xl font-bold text-gray-900">ZirekIQ</h1>
         <p className="text-gray-500 text-sm mt-1">Master Mathematics & Logic</p>
       </div>
-
-      {/* Main content */}
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 max-w-md mx-auto w-full">
         {/* User greeting */}
         <div className="bg-white rounded-2xl shadow-md p-6 w-full mb-6 text-center">
