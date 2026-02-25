@@ -27,12 +27,6 @@ export const ModeSelection: React.FC<ModeSelectionProps> = ({ onModeSelect, onBa
       description: 'Compete with other players in real-time',
       icon: '🎮',
     },
-    {
-      value: 'random',
-      label: 'Play Random',
-      description: 'Get a random mix of both modes',
-      icon: '🎲',
-    },
   ];
 
   const handleSelectMode = (mode: GameMode | 'random') => {
