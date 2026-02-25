@@ -22,12 +22,12 @@ const gradeOptions: GradeOption[] = [
   },
   {
     grade: 2,
-    title: 'Grade 5 -> 6 NIS/BIL Entry',
+    title: 'Grade 5 → 6',
     description: 'Fractions, decimals, ratios, percentages, area and perimeter, logic puzzles.',
   },
   {
     grade: 3,
-    title: 'Grade 6 -> 7 NIS/BIL Entry',
+    title: 'Grade 6 → 7',
     description: 'Algebra equations, integers, coordinate geometry, patterns, multi-step problems.',
   },
 ];
