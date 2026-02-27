@@ -7,15 +7,16 @@ import { QuestionLanguage } from '../services/aiQuestion';
 
 const prisma = new PrismaClient();
 const gameAnswers = new Map<string, Map<string, boolean>>();
-const onlineUsers = new Map<string, { userId: string; username: string }>();
+const onlineUsers = new Map<string, { userId: string; username: string; status: 'available' | 'in-game' }>();
 
 const buildOnlineUsersList = (excludeUserId?: string) => {
-  const uniqueUsers = new Map<string, { userId: string; username: string }>();
+  const uniqueUsers = new Map<string, { userId: string; username: string; status: 'available' | 'in-game' }>();
   for (const info of onlineUsers.values()) {
     if (excludeUserId && info.userId === excludeUserId) {
       continue;
     }
-    if (!uniqueUsers.has(info.userId)) {
+    // Only include available users in the list
+    if (info.status === 'available' && !uniqueUsers.has(info.userId)) {
       uniqueUsers.set(info.userId, info);
     }
   }
@@ -59,7 +60,7 @@ export const setupSocket = (io: Server) => {
         }
 
         socket.data.userId = user.id;
-        onlineUsers.set(socket.id, { userId: user.id, username: user.username });
+        onlineUsers.set(socket.id, { userId: user.id, username: user.username, status: 'available' });
         socket.emit('authenticated', { userId: user.id, username: user.username });
         broadcastOnlineUsers(io);
       } catch (error) {
@@ -115,6 +116,11 @@ export const setupSocket = (io: Server) => {
         const senderInfo = onlineUsers.get(senderSocketId);
         const acceptInfo = onlineUsers.get(socket.id);
 
+        // Update both players' status to in-game
+        if (senderInfo) senderInfo.status = 'in-game';
+        if (acceptInfo) acceptInfo.status = 'in-game';
+        broadcastOnlineUsers(io);
+
         io.to([senderSocketId, socket.id]).emit('game_request_accepted', {
           gameId: gameData.gameId,
           grade: data.grade,
@@ -152,6 +158,13 @@ export const setupSocket = (io: Server) => {
         if (!userId) {
           socket.emit('error', 'Not authenticated');
           return;
+        }
+
+        // Update user status to in-game
+        const userInfo = onlineUsers.get(socket.id);
+        if (userInfo) {
+          userInfo.status = 'in-game';
+          broadcastOnlineUsers(io);
         }
 
         // Join socket room
@@ -349,6 +362,14 @@ export const setupSocket = (io: Server) => {
               questionWinners,
             });
 
+            // Update both players' status back to available
+            for (const [socketId, userInfo] of onlineUsers.entries()) {
+              if (userInfo.userId === winnerPlayer.userId || userInfo.userId === loserPlayer.userId) {
+                userInfo.status = 'available';
+              }
+            }
+            broadcastOnlineUsers(io);
+
             // Clean up
             gameAnswers.delete(gameId);
           }
@@ -453,6 +474,26 @@ export const setupSocket = (io: Server) => {
             loserScore: loser.score,
             questionWinners: questionWinners,
           });
+
+          // Update both players' status back to available
+          for (const [socketId, userInfo] of onlineUsers.entries()) {
+            if (userInfo.userId === winner.userId || userInfo.userId === loser.userId) {
+              userInfo.status = 'available';
+            }
+          }
+          broadcastOnlineUsers(io);
+        }
+      } catch (error: any) {
+        socket.emit('error', error.message);
+      }
+    });
+
+    socket.on('update_user_status', (status: 'available' | 'in-game') => {
+      try {
+        const userInfo = onlineUsers.get(socket.id);
+        if (userInfo) {
+          userInfo.status = status;
+          broadcastOnlineUsers(io);
         }
       } catch (error: any) {
         socket.emit('error', error.message);

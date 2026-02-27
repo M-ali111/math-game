@@ -140,6 +140,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
       setMode('waiting');
       setIncomingRequest(null);
       setOutgoingRequestTo(null);
+      socket.emit('update_user_status', 'in-game');
       socket.emit('join_game', data.gameId);
     });
 
@@ -175,6 +176,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
       });
       setGameId(data.gameId);
       setMode('waiting');
+      socket?.emit('update_user_status', 'in-game');
       socket?.emit('join_game', data.gameId);
     } catch (error: any) {
       // Log error for debugging on frontend console
@@ -205,6 +207,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
       });
       setGameId(joinGameId);
       setMode('waiting');
+      socket?.emit('update_user_status', 'in-game');
       socket?.emit('join_game', joinGameId);
 
       if (data.status === 'ready') {
@@ -280,6 +283,11 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
       setPendingAction(action);
       setMode('grade');
     }
+  };
+
+  const handleBackFromWaiting = () => {
+    socket?.emit('update_user_status', 'available');
+    onBack();
   };
 
   const incomingRequestModal = incomingRequest ? (
@@ -563,6 +571,13 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
             </div>
 
             <p className="text-gray-600 mb-6 text-base">Finding opponent...</p>
+
+            <button
+              onClick={handleBackFromWaiting}
+              className="w-full bg-gray-300 hover:bg-gray-400 active:bg-gray-500 text-gray-900 font-bold py-4 rounded-2xl transition-colors min-h-[56px]"
+            >
+              ← Back
+            </button>
           </div>
         </div>
 
@@ -600,7 +615,10 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
           </div>
 
           <button 
-            onClick={onBack} 
+            onClick={() => {
+              socket?.emit('update_user_status', 'available');
+              onBack();
+            }} 
             className="w-full bg-cyan-500 hover:bg-cyan-600 active:bg-cyan-700 text-white font-bold py-4 sm:py-5 rounded-2xl text-lg sm:text-xl transition-colors min-h-[56px]"
           >
             Back to Menu
