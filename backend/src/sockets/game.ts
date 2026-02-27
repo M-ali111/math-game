@@ -662,6 +662,10 @@ export const setupSocket = (io: Server) => {
     socket.on('disconnect', async () => {
       console.log(`[disconnect] User disconnected: ${socket.id}`);
       
+      // TEMPORARY TEST: Broadcast opponent_left to all clients to verify frontend receives it
+      console.log(`[disconnect] TESTING: Broadcasting opponent_left to all clients`);
+      io.emit('opponent_left', { result: 'win', gameId: socket.data.gameId, test: true });
+      
       const userId = socket.data.userId as string | undefined;
       let gameId = socket.data.gameId as string | undefined;
       

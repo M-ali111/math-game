@@ -142,6 +142,14 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
       }
     });
 
+    socket.on('opponent_left', (data) => {
+      console.log('[MultiplayerGame] opponent_left event received:', data);
+      console.log('[MultiplayerGame] Opponent disconnected, showing victory screen');
+      setOpponentQuitMessage('Your opponent left the game');
+      setShowVictoryPopup(true);
+      console.log('[MultiplayerGame] Victory popup state set to true for opponent_left');
+    });
+
     socket.on('online_users', (data) => {
       setOnlineUsers(data);
     });
@@ -182,6 +190,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
       socket.off('round_result');
       socket.off('game_ended');
       socket.off('player_quit');
+      socket.off('opponent_left');
       socket.off('online_users');
       socket.off('game_request_received');
       socket.off('game_request_declined');
