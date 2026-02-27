@@ -99,7 +99,8 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
         if (data.isCorrect) {
           setAnswerExplanation(null);
         } else {
-          setAnswerExplanation(questions[currentIndex]?.explanation || null);
+          // Show explanation - will be set based on current state in render
+          setAnswerExplanation('loading');
         }
       }
     });
@@ -188,7 +189,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
       socket.off('game_request_accepted');
       socket.off('error');
     };
-  }, [socket, connected, user?.id, questions]);
+  }, [socket, connected, user?.id]);
 
   const createGame = async (grade: number) => {
     if (!subject) {
@@ -788,7 +789,9 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
           {answerExplanation && (
             <div className="bg-yellow-50 border-2 border-yellow-300 rounded-2xl p-4 sm:p-5 w-full">
               <p className="font-bold text-yellow-900 mb-2 text-lg sm:text-base">💡 Explanation</p>
-              <p className="text-yellow-800 text-base sm:text-sm leading-relaxed">{answerExplanation}</p>
+              <p className="text-yellow-800 text-base sm:text-sm leading-relaxed">
+                {answerExplanation === 'loading' ? currentQuestion?.explanation : answerExplanation}
+              </p>
             </div>
           )}
         </div>
