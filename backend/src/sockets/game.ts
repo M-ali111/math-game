@@ -7,7 +7,7 @@ import { QuestionLanguage } from '../services/aiQuestion';
 
 const prisma = new PrismaClient();
 const gameAnswers = new Map<string, Map<string, boolean>>();
-const onlineUsers = new Map<string, { userId: string; username: string; status: 'available' | 'in-game' }>();
+const onlineUsers = new Map<string, { userId: string; username: string; status: 'available' | 'in-game'; gameId?: string }>();
 
 const buildOnlineUsersList = (excludeUserId?: string) => {
   const uniqueUsers = new Map<string, { userId: string; username: string; status: 'available' | 'in-game' }>();
@@ -17,7 +17,7 @@ const buildOnlineUsersList = (excludeUserId?: string) => {
     }
     // Only include available users in the list
     if (info.status === 'available' && !uniqueUsers.has(info.userId)) {
-      uniqueUsers.set(info.userId, info);
+      uniqueUsers.set(info.userId, { userId: info.userId, username: info.username, status: info.status });
     }
   }
   return Array.from(uniqueUsers.values());
@@ -42,10 +42,14 @@ const findSocketIdByUserId = (userId: string) => {
 
 const handleOpponentLeft = async (gameId: string, leavingUserId: string, io: Server) => {
   try {
+    console.log(`[handleOpponentLeft] Starting for gameId: ${gameId}, leavingUserId: ${leavingUserId}`);
+    
     const game = await gameService.getGameDetails(gameId);
+    console.log(`[handleOpponentLeft] Game found, status: ${game.status}`);
     
     // Check if game is still in progress
     if (game.status !== 'in-progress') {
+      console.log(`[handleOpponentLeft] Game not in progress, skipping. Status: ${game.status}`);
       return;
     }
 
@@ -54,8 +58,11 @@ const handleOpponentLeft = async (gameId: string, leavingUserId: string, io: Ser
     const loserPlayer = game.players.find((p) => p.userId === leavingUserId);
 
     if (!winnerPlayer || !loserPlayer) {
+      console.log(`[handleOpponentLeft] Could not find both players. Winner: ${winnerPlayer?.userId}, Loser: ${loserPlayer?.userId}`);
       return;
     }
+
+    console.log(`[handleOpponentLeft] Winner: ${winnerPlayer.userId}, Loser: ${loserPlayer.userId}`);
 
     // Mark the winner
     await prisma.gamePlayer.update({
@@ -75,16 +82,19 @@ const handleOpponentLeft = async (gameId: string, leavingUserId: string, io: Ser
       data: { status: 'completed' },
     });
 
-    // Notify the remaining player
-    io.to(`game:${gameId}`).emit('opponent_left', {
+    // Notify the remaining player - use room name that matches join_game
+    const roomName = `game:${gameId}`;
+    console.log(`[handleOpponentLeft] Emitting opponent_left to room: ${roomName}`);
+    io.to(roomName).emit('opponent_left', {
       message: 'Your opponent left the game',
       result: 'win',
     });
 
     // Clean up answer tracking
     gameAnswers.delete(gameId);
+    console.log(`[handleOpponentLeft] Cleanup complete for gameId: ${gameId}`);
   } catch (error) {
-    console.error('Error handling opponent left:', error);
+    console.error('[handleOpponentLeft] Error handling opponent left:', error);
   }
 };
 
@@ -208,18 +218,22 @@ export const setupSocket = (io: Server) => {
           return;
         }
 
-        // Track the game this socket is in
-        socket.data.gameId = gameId;
+        console.log(`[join_game] User ${userId} joining game ${gameId}`);
 
-        // Update user status to in-game
+        // Track the game this socket is in (both in socket data and online users map)
+        socket.data.gameId = gameId;
         const userInfo = onlineUsers.get(socket.id);
         if (userInfo) {
+          userInfo.gameId = gameId;
           userInfo.status = 'in-game';
+          console.log(`[join_game] Socket data set:`, socket.data);
+          console.log(`[join_game] Online users updated with gameId: ${gameId}`);
           broadcastOnlineUsers(io);
         }
 
         // Join socket room
         socket.join(`game:${gameId}`);
+        console.log(`[join_game] Socket joined room: game:${gameId}`);
 
         // Get game details
         const game = await gameService.getGameDetails(gameId);
@@ -560,15 +574,24 @@ export const setupSocket = (io: Server) => {
         }
 
         const { gameId } = data;
+        console.log(`[leave_game] User ${userId} leaving game ${gameId}`);
+        
         socket.leave(`game:${gameId}`);
         socket.data.gameId = undefined;
+        
+        // Also clear from onlineUsers map
+        const userInfo = onlineUsers.get(socket.id);
+        if (userInfo) {
+          userInfo.gameId = undefined;
+        }
 
         // Update user status back to available
-        const userInfo = onlineUsers.get(socket.id);
         if (userInfo) {
           userInfo.status = 'available';
           broadcastOnlineUsers(io);
         }
+
+        console.log(`[leave_game] Handling opponent left for game ${gameId}`);
 
         // Handle opponent left logic
         await handleOpponentLeft(gameId, userId, io);
@@ -578,17 +601,31 @@ export const setupSocket = (io: Server) => {
     });
 
     socket.on('disconnect', async () => {
-      console.log('User disconnected:', socket.id);
+      console.log(`[disconnect] User disconnected: ${socket.id}`);
       
       const userId = socket.data.userId as string | undefined;
-      const gameId = socket.data.gameId as string | undefined;
+      let gameId = socket.data.gameId as string | undefined;
+      
+      // If gameId not in socket.data, try to get it from onlineUsers map
+      if (!gameId) {
+        const userInfo = onlineUsers.get(socket.id);
+        if (userInfo) {
+          gameId = userInfo.gameId;
+        }
+      }
+
+      console.log(`[disconnect] userId: ${userId}, gameId: ${gameId}`);
 
       // Handle opponent disconnect during game
       if (userId && gameId) {
+        console.log(`[disconnect] Handling opponent left for game ${gameId}`);
         await handleOpponentLeft(gameId, userId, io);
+      } else {
+        console.log(`[disconnect] Not in a game, no action needed`);
       }
 
       if (onlineUsers.delete(socket.id)) {
+        console.log(`[disconnect] User removed from online users map`);
         broadcastOnlineUsers(io);
       }
     });

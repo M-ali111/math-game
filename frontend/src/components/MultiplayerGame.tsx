@@ -80,6 +80,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
     });
 
     socket.on('game_started', (data) => {
+      console.log('[MultiplayerGame] game_started event received, listeners should be registered');
       setQuestions(data.questions);
       setMode('playing');
       setGameStatus('playing');
@@ -117,6 +118,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
     });
 
     socket.on('opponent_left', () => {
+      console.log('[MultiplayerGame] opponent_left event received');
       setMode('opponent_left');
     });
 
@@ -175,6 +177,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
     }
 
     const handleBeforeUnload = () => {
+      console.log('[MultiplayerGame] beforeunload triggered, emitting leave_game:', { gameId });
       socket.emit('leave_game', { gameId });
     };
 
@@ -308,6 +311,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
 
   const handleBackFromWaiting = () => {
     if (socket && gameId) {
+      console.log('[MultiplayerGame] Emitting leave_game:', { gameId });
       socket.emit('leave_game', { gameId });
     }
     socket?.emit('update_user_status', 'available');
@@ -654,6 +658,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
   }
 
   if (mode === 'opponent_left') {
+    console.log('[MultiplayerGame] Rendering opponent_left screen');
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-br from-yellow-50 to-amber-50 items-center justify-center px-4 py-8">
         <div className="bg-white rounded-2xl shadow-lg max-w-md w-full p-6 sm:p-8 text-center">
