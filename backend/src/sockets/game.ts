@@ -600,6 +600,65 @@ export const setupSocket = (io: Server) => {
       }
     });
 
+    socket.on('quit_game', async (data: { gameId: string; userId: string }) => {
+      try {
+        const { gameId, userId } = data;
+        console.log(`[quit_game] User ${userId} quitting game ${gameId}`);
+        
+        const game = await gameService.getGameDetails(gameId);
+        
+        // Check if game is still in progress
+        if (game.status !== 'in-progress') {
+          console.log(`[quit_game] Game not in progress, status: ${game.status}`);
+          return;
+        }
+
+        // Find the opponent
+        const opponentPlayer = game.players.find((p) => p.userId !== userId);
+        const quittingPlayer = game.players.find((p) => p.userId === userId);
+
+        if (!opponentPlayer || !quittingPlayer) {
+          console.log(`[quit_game] Could not find both players`);
+          return;
+        }
+
+        console.log(`[quit_game] Opponent: ${opponentPlayer.userId}, Quitter: ${quittingPlayer.userId}`);
+
+        // Mark opponent as winner
+        await prisma.gamePlayer.update({
+          where: { id: opponentPlayer.id },
+          data: { isWinner: true, score: 100, completedAt: new Date() },
+        });
+
+        // Mark quitter as loser
+        await prisma.gamePlayer.update({
+          where: { id: quittingPlayer.id },
+          data: { isWinner: false, score: 0, completedAt: new Date() },
+        });
+
+        // Update game status
+        await prisma.game.update({
+          where: { id: gameId },
+          data: { status: 'completed' },
+        });
+
+        // Notify both players in the room - use the game: prefix format
+        const roomName = `game:${gameId}`;
+        console.log(`[quit_game] Emitting player_quit to room: ${roomName}`);
+        io.to(roomName).emit('player_quit', {
+          quitterId: userId,
+          message: 'Opponent quit the game',
+          winnerId: opponentPlayer.userId,
+        });
+
+        console.log(`[quit_game] Cleanup for game ${gameId}`);
+        gameAnswers.delete(gameId);
+      } catch (error) {
+        console.error('[quit_game] Error handling quit game:', error);
+        socket.emit('error', error instanceof Error ? error.message : 'Unknown error');
+      }
+    });
+
     socket.on('disconnect', async () => {
       console.log(`[disconnect] User disconnected: ${socket.id}`);
       
