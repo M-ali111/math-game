@@ -32,7 +32,7 @@ interface IncomingRequest {
   language?: 'english' | 'russian' | 'kazakh';
 }
 
-type GameMode = 'selection' | 'grade' | 'join' | 'random' | 'waiting' | 'playing' | 'completed';
+type GameMode = 'selection' | 'grade' | 'join' | 'random' | 'waiting' | 'playing' | 'completed' | 'opponent_left';
 type PendingAction = 'create' | 'join' | 'random' | null;
 
 export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
@@ -116,6 +116,10 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
       setMode('completed');
     });
 
+    socket.on('opponent_left', () => {
+      setMode('opponent_left');
+    });
+
     socket.on('online_users', (data) => {
       setOnlineUsers(data);
     });
@@ -154,6 +158,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
       socket.off('answer_submitted');
       socket.off('round_result');
       socket.off('game_ended');
+      socket.off('opponent_left');
       socket.off('online_users');
       socket.off('game_request_received');
       socket.off('game_request_declined');
@@ -162,6 +167,22 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
       socket.off('error');
     };
   }, [socket, connected, currentIndex, questions.length]);
+
+  // Handle navigation away from game
+  useEffect(() => {
+    if (!socket || !gameId || mode === 'selection' || mode === 'grade' || mode === 'completed' || mode === 'opponent_left') {
+      return;
+    }
+
+    const handleBeforeUnload = () => {
+      socket.emit('leave_game', { gameId });
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [socket, gameId, mode]);
 
   const createGame = async (grade: number) => {
     if (!subject) {
@@ -286,6 +307,9 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
   };
 
   const handleBackFromWaiting = () => {
+    if (socket && gameId) {
+      socket.emit('leave_game', { gameId });
+    }
     socket?.emit('update_user_status', 'available');
     onBack();
   };
@@ -622,6 +646,35 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
             className="w-full bg-cyan-500 hover:bg-cyan-600 active:bg-cyan-700 text-white font-bold py-4 sm:py-5 rounded-2xl text-lg sm:text-xl transition-colors min-h-[56px]"
           >
             Back to Menu
+          </button>
+        </div>
+        {incomingRequestModal}
+      </div>
+    );
+  }
+
+  if (mode === 'opponent_left') {
+    return (
+      <div className="flex flex-col min-h-screen bg-gradient-to-br from-yellow-50 to-amber-50 items-center justify-center px-4 py-8">
+        <div className="bg-white rounded-2xl shadow-lg max-w-md w-full p-6 sm:p-8 text-center">
+          <div className="text-6xl sm:text-7xl mb-4">🏆</div>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-green-600">You Win!</h1>
+          <p className="text-base text-gray-600 mb-8">Your opponent disconnected</p>
+          
+          {/* Winner card */}
+          <div className="bg-gradient-to-br from-green-50 to-green-100 border-2 border-green-400 rounded-2xl p-6 mb-8">
+            <p className="text-base text-green-600 font-bold mb-2">🎉 Victory!</p>
+            <p className="text-gray-700 font-semibold">Your opponent left the game</p>
+          </div>
+
+          <button 
+            onClick={() => {
+              socket?.emit('update_user_status', 'available');
+              onBack();
+            }} 
+            className="w-full bg-green-500 hover:bg-green-600 active:bg-green-700 text-white font-bold py-4 sm:py-5 rounded-2xl text-lg sm:text-xl transition-colors min-h-[56px]"
+          >
+            Go Home
           </button>
         </div>
         {incomingRequestModal}

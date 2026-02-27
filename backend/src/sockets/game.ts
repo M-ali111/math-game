@@ -40,6 +40,54 @@ const findSocketIdByUserId = (userId: string) => {
   return null;
 };
 
+const handleOpponentLeft = async (gameId: string, leavingUserId: string, io: Server) => {
+  try {
+    const game = await gameService.getGameDetails(gameId);
+    
+    // Check if game is still in progress
+    if (game.status !== 'in-progress') {
+      return;
+    }
+
+    // Find the other player
+    const winnerPlayer = game.players.find((p) => p.userId !== leavingUserId);
+    const loserPlayer = game.players.find((p) => p.userId === leavingUserId);
+
+    if (!winnerPlayer || !loserPlayer) {
+      return;
+    }
+
+    // Mark the winner
+    await prisma.gamePlayer.update({
+      where: { id: winnerPlayer.id },
+      data: { isWinner: true, score: 100, completedAt: new Date() },
+    });
+
+    // Mark the loser
+    await prisma.gamePlayer.update({
+      where: { id: loserPlayer.id },
+      data: { isWinner: false, score: 0, completedAt: new Date() },
+    });
+
+    // Update game status
+    await prisma.game.update({
+      where: { id: gameId },
+      data: { status: 'completed' },
+    });
+
+    // Notify the remaining player
+    io.to(`game:${gameId}`).emit('opponent_left', {
+      message: 'Your opponent left the game',
+      result: 'win',
+    });
+
+    // Clean up answer tracking
+    gameAnswers.delete(gameId);
+  } catch (error) {
+    console.error('Error handling opponent left:', error);
+  }
+};
+
 export const setupSocket = (io: Server) => {
   io.on('connection', (socket: Socket) => {
     console.log('User connected:', socket.id);
@@ -159,6 +207,9 @@ export const setupSocket = (io: Server) => {
           socket.emit('error', 'Not authenticated');
           return;
         }
+
+        // Track the game this socket is in
+        socket.data.gameId = gameId;
 
         // Update user status to in-game
         const userInfo = onlineUsers.get(socket.id);
@@ -500,8 +551,43 @@ export const setupSocket = (io: Server) => {
       }
     });
 
-    socket.on('disconnect', () => {
+    socket.on('leave_game', async (data: { gameId: string }) => {
+      try {
+        const userId = socket.data.userId as string | undefined;
+        if (!userId) {
+          socket.emit('error', 'Not authenticated');
+          return;
+        }
+
+        const { gameId } = data;
+        socket.leave(`game:${gameId}`);
+        socket.data.gameId = undefined;
+
+        // Update user status back to available
+        const userInfo = onlineUsers.get(socket.id);
+        if (userInfo) {
+          userInfo.status = 'available';
+          broadcastOnlineUsers(io);
+        }
+
+        // Handle opponent left logic
+        await handleOpponentLeft(gameId, userId, io);
+      } catch (error: any) {
+        socket.emit('error', error.message);
+      }
+    });
+
+    socket.on('disconnect', async () => {
       console.log('User disconnected:', socket.id);
+      
+      const userId = socket.data.userId as string | undefined;
+      const gameId = socket.data.gameId as string | undefined;
+
+      // Handle opponent disconnect during game
+      if (userId && gameId) {
+        await handleOpponentLeft(gameId, userId, io);
+      }
+
       if (onlineUsers.delete(socket.id)) {
         broadcastOnlineUsers(io);
       }
