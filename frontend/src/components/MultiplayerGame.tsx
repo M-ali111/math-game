@@ -72,8 +72,11 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
         ? 'Grade 6 -> 7 NIS/BIL Entry'
         : '';
 
+  // Separate effect for socket event listeners - should only depend on socket, not game state
   useEffect(() => {
     if (!socket || !connected) return;
+
+    console.log('[MultiplayerGame] Registering socket event listeners');
 
     socket.on('player_joined', (data) => {
       setPlayers(data.players);
@@ -122,14 +125,19 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
 
     socket.on('player_quit', (data) => {
       console.log('[MultiplayerGame] player_quit event received:', data);
+      console.log('[MultiplayerGame] Current user ID:', user?.id);
+      console.log('[MultiplayerGame] Quitter ID:', data.quitterId);
+      console.log('[MultiplayerGame] Are they equal?', data.quitterId === user?.id);
+      
       if (data.quitterId === user?.id) {
         // This player quit, they already navigated away
-        console.log('[MultiplayerGame] Current user quit the game');
+        console.log('[MultiplayerGame] Current user quit the game, no action needed');
       } else {
         // Opponent quit, show victory popup
         console.log('[MultiplayerGame] Opponent quit, showing victory popup');
         setOpponentQuitMessage('Your opponent quit the game');
         setShowVictoryPopup(true);
+        console.log('[MultiplayerGame] Victory popup state set to true');
       }
     });
 
@@ -166,6 +174,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
     });
 
     return () => {
+      console.log('[MultiplayerGame] Cleaning up socket event listeners');
       socket.off('player_joined');
       socket.off('game_started');
       socket.off('answer_submitted');
@@ -179,7 +188,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
       socket.off('game_request_accepted');
       socket.off('error');
     };
-  }, [socket, connected, currentIndex, questions.length, user?.id]);
+  }, [socket, connected, user?.id, questions]);
 
   const createGame = async (grade: number) => {
     if (!subject) {
