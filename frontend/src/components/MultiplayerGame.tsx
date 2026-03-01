@@ -123,10 +123,6 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
       setMode('completed');
     });
 
-    socket.on('player_quit', () => {
-      setOpponentLeft(true);
-    });
-
     socket.on('online_users', (data) => {
       setOnlineUsers(data);
     });
@@ -166,7 +162,6 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
       socket.off('answer_submitted');
       socket.off('round_result');
       socket.off('game_ended');
-      socket.off('player_quit');
       socket.off('online_users');
       socket.off('game_request_received');
       socket.off('game_request_declined');
@@ -179,14 +174,30 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
   useEffect(() => {
     if (!socket) return;
 
-    socket.on('opponent_left', () => {
-      setOpponentLeft(true);
+    setOpponentLeft(false);
+    console.log('opponent_left listener registered for game:', gameId);
+
+    socket.off('opponent_left');
+    socket.on('opponent_left', (data: { gameId?: string; result?: string; message?: string }) => {
+      console.log('opponent_left event received:', data);
+      console.log('currentGameId at time of event:', gameId);
+      if (gameId && data?.gameId === gameId) {
+        setOpponentLeft(true);
+      }
     });
 
     return () => {
       socket.off('opponent_left');
+      setOpponentLeft(false);
     };
-  }, [socket]);
+  }, [socket, gameId]);
+
+  useEffect(() => {
+    setOpponentLeft(false);
+    return () => {
+      setOpponentLeft(false);
+    };
+  }, []);
 
   useEffect(() => {
     if (!socket) return;
@@ -207,6 +218,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
   }, [socket, gameId, mode]);
 
   const createGame = async (grade: number) => {
+    setOpponentLeft(false);
     if (!subject) {
       alert('Subject not selected');
       return;
@@ -232,6 +244,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
   };
 
   const joinGame = async () => {
+    setOpponentLeft(false);
     if (!joinGameId.trim()) {
       alert('Please enter a game ID');
       return;
@@ -311,6 +324,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
   };
 
   const handleSelectGameAction = (action: PendingAction) => {
+    setOpponentLeft(false);
     if (subject === 'logic') {
       // For logic, skip grade selection and use grade 0
       setSelectedGrade(0 as unknown as 1);

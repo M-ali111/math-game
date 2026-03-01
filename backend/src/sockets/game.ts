@@ -87,11 +87,12 @@ const handleOpponentLeft = async (gameId: string, leavingUserId: string, io: Ser
     // Notify the remaining player - use room name that matches join_game
     const roomName = `game:${gameId}`;
     console.log('opponent_left roomName:', roomName);
-    console.log('Emitting opponent_left to room:', roomName);
+    console.log('emitting opponent_left to room:', gameId);
     console.log(`[handleOpponentLeft] Emitting opponent_left to room: ${roomName}`);
     io.to(roomName).emit('opponent_left', {
       message: 'Your opponent left the game',
       result: 'win',
+      gameId,
     });
 
     for (const userInfo of onlineUsers.values()) {
@@ -596,6 +597,8 @@ export const setupSocket = (io: Server) => {
           return;
         }
 
+        console.log('leave_game received:', gameId);
+
         console.log(`[leave_game] User ${userId} leaving game ${gameId}`);
 
         const roomName = `game:${gameId}`;
@@ -645,6 +648,7 @@ export const setupSocket = (io: Server) => {
 
     socket.on('disconnect', async () => {
       console.log(`[disconnect] User disconnected: ${socket.id}`);
+      console.log('disconnect - socket.data.gameId:', socket.data.gameId);
 
       const userId = socket.data.userId as string | undefined;
       let gameId = socket.data.gameId as string | undefined;
@@ -663,6 +667,20 @@ export const setupSocket = (io: Server) => {
 
       // Handle opponent disconnect during game
       if (userId && gameId) {
+        const game = await prisma.game.findUnique({
+          where: { id: gameId },
+          select: { status: true },
+        });
+
+        if (!game || game.status !== 'active') {
+          console.log(`[disconnect] Game not active for gameId ${gameId}, skipping opponent_left`);
+          if (onlineUsers.delete(socket.id)) {
+            console.log(`[disconnect] User removed from online users map`);
+            broadcastOnlineUsers(io);
+          }
+          return;
+        }
+
         console.log(`[disconnect] Handling opponent left for game ${gameId}`);
         await handleOpponentLeft(gameId, userId, io);
       } else {
