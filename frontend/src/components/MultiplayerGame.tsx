@@ -176,24 +176,29 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
   }, [socket, connected, user?.id]);
 
   useEffect(() => {
+    socket?.off('opponent_left');
+  }, []);
+
+  useEffect(() => {
     if (!socket) return;
+    if (!gameId) return;
 
     setOpponentLeft(false);
-    console.log('opponent_left listener registered for game:', gameId);
+    console.log('Registering opponent_left for confirmed gameId:', gameId);
 
     socket.off('opponent_left');
     socket.on('opponent_left', (data: { gameId?: string; result?: string; message?: string }) => {
-      console.log('opponent_left received NO VALIDATION:', data);
-      console.log('opponent_left event received:', data);
-      console.log('currentGameId at time of event:', gameId);
-      setOpponentLeft(true);
+      console.log('opponent_left received:', data, 'current gameId:', gameId);
+      if (data.gameId === gameId) {
+        setOpponentLeft(true);
+      }
     });
 
     return () => {
       socket.off('opponent_left');
       setOpponentLeft(false);
     };
-  }, [socket, gameId]);
+  }, [gameId, socket]);
 
   useEffect(() => {
     setOpponentLeft(false);
