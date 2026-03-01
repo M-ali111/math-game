@@ -16,6 +16,7 @@ export const Login: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuccess
     try {
       if (isSignup) {
         await signup(email, username, password);
+        localStorage.setItem('zirekIqJustSignedUp', 'true');
       } else {
         await login(email, password);
       }

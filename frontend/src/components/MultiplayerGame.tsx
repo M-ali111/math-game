@@ -57,6 +57,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
   const [showQuitDialog, setShowQuitDialog] = useState(false);
   const [opponentLeft, setOpponentLeft] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
+  const [visualTimeLeft, setVisualTimeLeft] = useState(30);
   const { request } = useApi();
   const { socket, connected } = useGameSocket();
   const { user } = useAuth();
@@ -221,6 +222,17 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
       socket.emit('leave_game', { gameId });
     };
   }, [socket, gameStarted, gameId]);
+
+  useEffect(() => {
+    if (mode !== 'playing') return;
+    setVisualTimeLeft(30);
+
+    const timer = setInterval(() => {
+      setVisualTimeLeft((prev) => (prev <= 1 ? 30 : prev - 1));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [mode, currentIndex]);
 
   const createGame = async (grade: number) => {
     setOpponentLeft(false);
@@ -759,76 +771,92 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
   const currentQuestion = questions[currentIndex];
 
   if (mode === 'playing' && currentQuestion) {
+    const progressPercent = ((currentIndex + 1) / questions.length) * 100;
+    const timerColor = visualTimeLeft > 20 ? '#22c55e' : visualTimeLeft > 10 ? '#f59e0b' : '#ef4444';
+    const circumference = 2 * Math.PI * 26;
+    const timerStrokeDashoffset = circumference - (visualTimeLeft / 30) * circumference;
+
     return (
-      <div className="flex flex-col min-h-screen bg-amber-50 pb-20">
-        {/* Top Bar */}
-        <div className="bg-white shadow-md px-4 py-4 sm:py-5">
-          <div className="max-w-md mx-auto flex justify-between items-center mb-3">
+      <div className="flex flex-col min-h-screen bg-amber-50 pb-24 animate-fade-in">
+        <div className="bg-white shadow-md px-4 py-4">
+          <div className="max-w-md mx-auto grid grid-cols-3 items-center gap-2">
             <div>
-              <p className="text-xs sm:text-sm text-gray-500 uppercase font-semibold">Question</p>
-              <p className="text-xl sm:text-2xl font-bold text-gray-900">{currentIndex + 1} of {questions.length}</p>
+              <p className="text-sm font-bold text-gray-900">Q {currentIndex + 1} / {questions.length}</p>
+              <div className="bg-gray-200 rounded-full h-2 mt-2">
+                <div className="bg-teal-500 h-2 rounded-full transition-all duration-300" style={{ width: `${progressPercent}%` }} />
+              </div>
             </div>
+
+            <div className="flex justify-center">
+              <div className="relative w-16 h-16">
+                <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
+                  <circle cx="32" cy="32" r="26" stroke="#e5e7eb" strokeWidth="6" fill="none" />
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r="26"
+                    stroke={timerColor}
+                    strokeWidth="6"
+                    fill="none"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={timerStrokeDashoffset}
+                    className="transition-all duration-1000"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center text-sm font-bold text-gray-900">{visualTimeLeft}</div>
+              </div>
+            </div>
+
             <div className="text-right">
-              <p className="text-xs sm:text-sm text-gray-500 uppercase font-semibold">Status</p>
-              <p className="text-xl sm:text-2xl font-bold text-cyan-500 capitalize">{gameStatus}</p>
+              <p className="text-xs text-gray-400">Status</p>
+              <p className="text-sm font-bold text-teal-500 capitalize">{gameStatus}</p>
+              <button
+                onClick={() => setShowQuitDialog(true)}
+                className="mt-2 bg-red-500 hover:bg-red-600 active:bg-red-700 text-white font-bold py-1.5 px-3 rounded-lg text-xs transition-colors min-h-[32px]"
+              >
+                🚪 Quit
+              </button>
             </div>
-            <button
-              onClick={() => setShowQuitDialog(true)}
-              className="bg-red-500 hover:bg-red-600 active:bg-red-700 text-white font-bold py-2 px-3 rounded-lg text-sm transition-colors min-h-[40px] whitespace-nowrap ml-3"
-            >
-              🚪 Quit
-            </button>
-          </div>
-          
-          {/* Progress Bar */}
-          <div className="max-w-md mx-auto bg-gray-200 rounded-full h-3">
-            <div 
-              className="bg-cyan-500 h-3 rounded-full transition-all duration-300"
-              style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
-            ></div>
           </div>
         </div>
 
-        {/* Subject Badge */}
-        <div className="bg-white border-b border-gray-100 px-4 py-3 sm:py-4">
-          <div className="max-w-md mx-auto">
-            <span className={`inline-block px-4 py-2 sm:py-3 rounded-full text-white text-base sm:text-sm font-bold ${
-              currentQuestion.subject === 'logic' ? 'bg-purple-500' : 'bg-blue-500'
+        <div className="flex-1 px-4 py-6 max-w-md mx-auto w-full space-y-4">
+          <div className={`bg-white rounded-2xl shadow-md p-5 text-center border-t-4 ${
+            currentQuestion.subject === 'logic' ? 'border-purple-500' : 'border-teal-500'
+          }`}>
+            <span className={`inline-flex px-3 py-1 rounded-full text-sm text-white font-bold mb-4 ${
+              currentQuestion.subject === 'logic' ? 'bg-purple-500' : 'bg-teal-500'
             }`}>
-              {currentQuestion.subject === 'logic' ? '🧠 Logic & IQ' : '🔢 Mathematics'}
+              {currentQuestion.subject === 'logic' ? '🧠 Logic' : '🔢 Math'}
             </span>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col items-center justify-center px-4 py-6 sm:py-8 max-w-md mx-auto w-full">
-          {/* Question Card */}
-          <div className="bg-white rounded-2xl shadow-md p-6 sm:p-8 w-full mb-6 sm:mb-8 text-center">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 leading-tight">{currentQuestion.text}</h2>
+            <h2 className="text-xl font-semibold text-gray-900 min-h-[150px] flex items-center justify-center leading-relaxed">
+              {currentQuestion.text}
+            </h2>
           </div>
 
-          {/* Answer Options Grid */}
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 w-full mb-6 sm:mb-8">
+          <div className="grid grid-cols-2 gap-3 w-full">
             {currentQuestion.options.map((option, index) => (
               <button
                 key={index}
                 onClick={() => handleAnswerSubmit(index)}
                 disabled={selectedAnswer !== null}
-                className={`p-4 sm:p-5 rounded-2xl text-center font-bold transition-all min-h-[80px] sm:min-h-[90px] text-lg sm:text-xl flex items-center justify-center ${
+                className={`rounded-2xl border-2 transition-all duration-200 min-h-[64px] p-3 text-left flex items-center gap-3 ${
                   selectedAnswer === index
-                    ? 'bg-cyan-500 text-white shadow-lg scale-95'
-                    : 'bg-white text-gray-900 border-2 border-gray-200 hover:border-cyan-300 active:scale-95'
-                } ${selectedAnswer !== null ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                    ? 'bg-teal-500 text-white border-teal-500'
+                    : 'bg-white text-gray-900 border-gray-300 hover:border-teal-400'
+                } ${selectedAnswer !== null ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer hover:scale-105'}`}
               >
-                {option}
+                <span className="w-8 h-8 rounded-full bg-black/10 text-sm font-bold flex items-center justify-center">
+                  {String.fromCharCode(65 + index)}
+                </span>
+                <span className="text-sm font-semibold leading-snug">{option}</span>
               </button>
             ))}
           </div>
 
-          {/* Explanation Box */}
           {answerExplanation && (
-            <div className="bg-yellow-50 border-2 border-yellow-300 rounded-2xl p-4 sm:p-5 w-full">
-              <p className="font-bold text-yellow-900 mb-2 text-lg sm:text-base">💡 Explanation</p>
+            <div className="bg-amber-100 border border-amber-300 rounded-2xl p-4 w-full transition-all duration-300">
+              <p className="font-bold text-amber-900 mb-2">💡 Explanation:</p>
               <p className="text-yellow-800 text-base sm:text-sm leading-relaxed">
                 {answerExplanation === 'loading' ? currentQuestion?.explanation : answerExplanation}
               </p>

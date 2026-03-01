@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useGame, GameMode } from '../context/GameContext';
 import { useLanguage } from '../context/LanguageContext';
 import { translations } from '../utils/translations';
@@ -10,7 +10,8 @@ interface ModeSelectionProps {
 
 export const ModeSelection: React.FC<ModeSelectionProps> = ({ onModeSelect, onBack }) => {
   const { subject } = useGame();
-  const { language } = useLanguage();
+  const { language, setLanguage } = useLanguage();
+  const quickPlayHandledRef = useRef(false);
 
   const t = translations[language];
 
@@ -33,6 +34,35 @@ export const ModeSelection: React.FC<ModeSelectionProps> = ({ onModeSelect, onBa
     onModeSelect(mode);
   };
 
+  useEffect(() => {
+    if (quickPlayHandledRef.current) return;
+
+    const isQuickPlayPending = localStorage.getItem('quickPlayPending') === 'true';
+    if (!isQuickPlayPending) return;
+
+    const rawSettings = localStorage.getItem('quickPlaySettings');
+    if (!rawSettings) return;
+
+    try {
+      const settings = JSON.parse(rawSettings);
+      if (settings?.language) {
+        setLanguage(settings.language);
+      }
+
+      quickPlayHandledRef.current = true;
+
+      if (subject === 'logic') {
+        localStorage.removeItem('quickPlayPending');
+        localStorage.removeItem('quickPlaySettings');
+      }
+
+      onModeSelect('solo');
+    } catch {
+      localStorage.removeItem('quickPlayPending');
+      localStorage.removeItem('quickPlaySettings');
+    }
+  }, [onModeSelect, setLanguage, subject]);
+
   const isMath = subject === 'math';
   const buttonColor = isMath 
     ? 'bg-cyan-500 hover:bg-cyan-600 text-white' 
@@ -40,7 +70,7 @@ export const ModeSelection: React.FC<ModeSelectionProps> = ({ onModeSelect, onBa
   const headerBgColor = isMath ? 'bg-cyan-50 text-cyan-700' : 'bg-purple-50 text-purple-700';
 
   return (
-    <div className="flex flex-col min-h-screen bg-amber-50">
+    <div className="flex flex-col min-h-screen bg-amber-50 animate-fade-in">
       {/* Header */}
       <div className="bg-white shadow-sm px-4 py-6 text-center flex items-center justify-between">
         <button 

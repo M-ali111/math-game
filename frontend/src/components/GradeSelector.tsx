@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { translations } from '../utils/translations';
 
@@ -35,13 +35,38 @@ const gradeOptions: GradeOption[] = [
 export const GradeSelector: React.FC<GradeSelectorProps> = ({ title, onSelect, onBack }) => {
   const { language, setLanguage } = useLanguage();
   const t = translations[language];
+  const quickPlayHandledRef = useRef(false);
 
   const handleGradeSelect = (grade: number) => {
     onSelect(grade);
   };
 
+  useEffect(() => {
+    if (quickPlayHandledRef.current) return;
+
+    const isQuickPlayPending = localStorage.getItem('quickPlayPending') === 'true';
+    const rawSettings = localStorage.getItem('quickPlaySettings');
+    if (!isQuickPlayPending || !rawSettings) return;
+
+    try {
+      const settings = JSON.parse(rawSettings);
+      if (settings?.language) {
+        setLanguage(settings.language);
+      }
+      if (typeof settings?.grade === 'number') {
+        quickPlayHandledRef.current = true;
+        localStorage.removeItem('quickPlayPending');
+        localStorage.removeItem('quickPlaySettings');
+        onSelect(settings.grade);
+      }
+    } catch {
+      localStorage.removeItem('quickPlayPending');
+      localStorage.removeItem('quickPlaySettings');
+    }
+  }, [onSelect, setLanguage]);
+
   return (
-    <div className="flex flex-col min-h-screen bg-amber-50">
+    <div className="flex flex-col min-h-screen bg-amber-50 animate-fade-in">
       {/* Header */}
       <div className="bg-white shadow-sm px-4 py-6">
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900 text-center">{title || t.chooseGrade}</h1>

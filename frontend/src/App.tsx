@@ -9,6 +9,7 @@ import { SoloGame } from './components/SoloGame';
 import { MultiplayerGame } from './components/MultiplayerGame';
 import { Stats } from './components/Stats';
 import Leaderboard from './components/Leaderboard';
+import { OnboardingScreen } from './components/OnboardingScreen';
 
 type AppState = 
   | 'login' 
@@ -23,14 +24,20 @@ type AppState =
 const AppContent: React.FC = () => {
   const [appState, setAppState] = useState<AppState>('login');
   const [selectedGameMode, setSelectedGameMode] = useState<'solo' | 'multiplayer' | 'random' | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const { user, token, logout } = useAuth();
   const { subject, setSubject, setSelectedMode, setSelectedGrade, resetGameFlow } = useGame();
 
   useEffect(() => {
     if (token && user) {
       setAppState('menu');
+
+      const justSignedUp = localStorage.getItem('zirekIqJustSignedUp') === 'true';
+      const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding') === 'true';
+      setShowOnboarding(justSignedUp && !hasSeenOnboarding);
     } else {
       setAppState('login');
+      setShowOnboarding(false);
     }
   }, [token, user]);
 
@@ -96,6 +103,11 @@ const AppContent: React.FC = () => {
 
   return (
     <div>
+      {token && user && showOnboarding && (
+        <OnboardingScreen onComplete={() => setShowOnboarding(false)} />
+      )}
+      {!showOnboarding && (
+        <>
       {appState === 'login' && <Login onLoginSuccess={() => setAppState('menu')} />}
       {appState === 'menu' && (
         <GameMenu 
@@ -120,6 +132,8 @@ const AppContent: React.FC = () => {
       {appState === 'multiplayer' && <MultiplayerGame onBack={handleBack} />}
       {appState === 'stats' && <Stats onBack={handleBack} />}
       {appState === 'leaderboard' && <Leaderboard onBack={handleBack} />}
+        </>
+      )}
     </div>
   );
 };
