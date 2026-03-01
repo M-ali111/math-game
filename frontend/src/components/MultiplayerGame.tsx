@@ -55,14 +55,32 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
   const [requestNotice, setRequestNotice] = useState<string | null>(null);
   const [outgoingRequestTo, setOutgoingRequestTo] = useState<string | null>(null);
   const [showQuitDialog, setShowQuitDialog] = useState(false);
-  const [showVictoryPopup, setShowVictoryPopup] = useState(false);
-  const [opponentQuitMessage, setOpponentQuitMessage] = useState('');
+  const [opponentLeft, setOpponentLeft] = useState(false);
   const { request } = useApi();
   const { socket, connected } = useGameSocket();
   const { user } = useAuth();
   const { language } = useLanguage();
   const { subject } = useGame();
   const t = translations[language];
+
+  const clearMultiplayerState = () => {
+    setQuestions([]);
+    setCurrentIndex(0);
+    setGameStatus('');
+    setGameResult(null);
+    setSelectedAnswer(null);
+    setAnswerExplanation(null);
+    setShowQuitDialog(false);
+    setOpponentLeft(false);
+    setPlayers([]);
+    setGameId('');
+  };
+
+  const goHomeAfterOpponentLeft = () => {
+    socket?.emit('update_user_status', 'available');
+    clearMultiplayerState();
+    onBack();
+  };
 
   const gradeLabel = selectedGrade === 1
     ? 'Primary (Grades 1-6)'
@@ -124,30 +142,8 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
       setMode('completed');
     });
 
-    socket.on('player_quit', (data) => {
-      console.log('[MultiplayerGame] player_quit event received:', data);
-      console.log('[MultiplayerGame] Current user ID:', user?.id);
-      console.log('[MultiplayerGame] Quitter ID:', data.quitterId);
-      console.log('[MultiplayerGame] Are they equal?', data.quitterId === user?.id);
-      
-      if (data.quitterId === user?.id) {
-        // This player quit, they already navigated away
-        console.log('[MultiplayerGame] Current user quit the game, no action needed');
-      } else {
-        // Opponent quit, show victory popup
-        console.log('[MultiplayerGame] Opponent quit, showing victory popup');
-        setOpponentQuitMessage('Your opponent quit the game');
-        setShowVictoryPopup(true);
-        console.log('[MultiplayerGame] Victory popup state set to true');
-      }
-    });
-
-    socket.on('opponent_left', (data) => {
-      console.log('[MultiplayerGame] opponent_left event received:', data);
-      console.log('[MultiplayerGame] Opponent disconnected, showing victory screen');
-      setOpponentQuitMessage('Your opponent left the game');
-      setShowVictoryPopup(true);
-      console.log('[MultiplayerGame] Victory popup state set to true for opponent_left');
+    socket.on('player_quit', () => {
+      setOpponentLeft(true);
     });
 
     socket.on('online_users', (data) => {
@@ -190,7 +186,6 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
       socket.off('round_result');
       socket.off('game_ended');
       socket.off('player_quit');
-      socket.off('opponent_left');
       socket.off('online_users');
       socket.off('game_request_received');
       socket.off('game_request_declined');
@@ -199,6 +194,41 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
       socket.off('error');
     };
   }, [socket, connected, user?.id]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    console.log('opponent_left listener registered');
+
+    const handleOpponentLeft = (data: { message?: string; result?: string }) => {
+      console.log('opponent_left event received:', data);
+      setOpponentLeft(true);
+    };
+
+    socket.on('opponent_left', handleOpponentLeft);
+
+    return () => {
+      socket.off('opponent_left', handleOpponentLeft);
+    };
+  }, [socket]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const gameIsActive = Boolean(gameId) && (mode === 'waiting' || mode === 'playing');
+    if (!gameIsActive) return;
+
+    const leaveCurrentGame = () => {
+      socket.emit('leave_game', { gameId });
+    };
+
+    window.addEventListener('beforeunload', leaveCurrentGame);
+
+    return () => {
+      leaveCurrentGame();
+      window.removeEventListener('beforeunload', leaveCurrentGame);
+    };
+  }, [socket, gameId, mode]);
 
   const createGame = async (grade: number) => {
     if (!subject) {
@@ -324,11 +354,12 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
 
   const handleQuitGame = () => {
     console.log('[MultiplayerGame] Quitting game:', { gameId, userId: user?.id });
-    if (socket && gameId && user?.id) {
-      socket.emit('quit_game', { gameId, userId: user.id });
+    if (socket && gameId) {
+      socket.emit('leave_game', { gameId });
     }
     setShowQuitDialog(false);
     socket?.emit('update_user_status', 'available');
+    clearMultiplayerState();
     onBack();
   };
 
@@ -677,20 +708,16 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
   }
 
   // Victory popup for when opponent quits
-  const victoryPopup = showVictoryPopup ? (
+  const victoryPopup = opponentLeft ? (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center px-4 z-50">
       <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-2xl shadow-2xl p-6 sm:p-8 w-full max-w-sm">
         <div className="text-center">
           <div className="text-6xl sm:text-7xl mb-4">🏆</div>
           <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-green-600">You Win!</h1>
-          <p className="text-gray-600 mb-8 text-base">{opponentQuitMessage}</p>
+          <p className="text-gray-600 mb-8 text-base">Your opponent left the game</p>
           
           <button 
-            onClick={() => {
-              setShowVictoryPopup(false);
-              socket?.emit('update_user_status', 'available');
-              onBack();
-            }} 
+            onClick={goHomeAfterOpponentLeft}
             className="w-full bg-green-500 hover:bg-green-600 active:bg-green-700 text-white font-bold py-4 sm:py-5 rounded-2xl text-lg transition-colors min-h-[56px]"
           >
             Go Home

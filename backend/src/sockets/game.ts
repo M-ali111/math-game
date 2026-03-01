@@ -40,6 +40,8 @@ const findSocketIdByUserId = (userId: string) => {
   return null;
 };
 
+const isGameStillActive = (status: string) => status !== 'completed' && status !== 'abandoned';
+
 const handleOpponentLeft = async (gameId: string, leavingUserId: string, io: Server) => {
   try {
     console.log(`[handleOpponentLeft] Starting for gameId: ${gameId}, leavingUserId: ${leavingUserId}`);
@@ -47,9 +49,9 @@ const handleOpponentLeft = async (gameId: string, leavingUserId: string, io: Ser
     const game = await gameService.getGameDetails(gameId);
     console.log(`[handleOpponentLeft] Game found, status: ${game.status}`);
     
-    // Check if game is still in progress
-    if (game.status !== 'in-progress') {
-      console.log(`[handleOpponentLeft] Game not in progress, skipping. Status: ${game.status}`);
+    // Check if game is still active
+    if (!isGameStillActive(game.status)) {
+      console.log(`[handleOpponentLeft] Game not active, skipping. Status: ${game.status}`);
       return;
     }
 
@@ -84,11 +86,21 @@ const handleOpponentLeft = async (gameId: string, leavingUserId: string, io: Ser
 
     // Notify the remaining player - use room name that matches join_game
     const roomName = `game:${gameId}`;
+    console.log('opponent_left roomName:', roomName);
+    console.log('Emitting opponent_left to room:', roomName);
     console.log(`[handleOpponentLeft] Emitting opponent_left to room: ${roomName}`);
     io.to(roomName).emit('opponent_left', {
       message: 'Your opponent left the game',
       result: 'win',
     });
+
+    for (const userInfo of onlineUsers.values()) {
+      if (game.players.some((player) => player.userId === userInfo.userId)) {
+        userInfo.status = 'available';
+        userInfo.gameId = undefined;
+      }
+    }
+    broadcastOnlineUsers(io);
 
     // Clean up answer tracking
     gameAnswers.delete(gameId);
@@ -232,8 +244,10 @@ export const setupSocket = (io: Server) => {
         }
 
         // Join socket room
-        socket.join(`game:${gameId}`);
-        console.log(`[join_game] Socket joined room: game:${gameId}`);
+        const roomName = `game:${gameId}`;
+        socket.join(roomName);
+        console.log('join_game roomName:', roomName);
+        console.log(`[join_game] Socket joined room: ${roomName}`);
 
         // Get game details
         const game = await gameService.getGameDetails(gameId);
@@ -573,23 +587,27 @@ export const setupSocket = (io: Server) => {
           return;
         }
 
-        const { gameId } = data;
-        console.log(`[leave_game] User ${userId} leaving game ${gameId}`);
-        
-        socket.leave(`game:${gameId}`);
-        socket.data.gameId = undefined;
-        
-        // Also clear from onlineUsers map
+        console.log('leave_game received from:', socket.data.userId);
+
         const userInfo = onlineUsers.get(socket.id);
-        if (userInfo) {
-          userInfo.gameId = undefined;
+        const gameId = data?.gameId || (socket.data.gameId as string | undefined) || userInfo?.gameId;
+        if (!gameId) {
+          console.log('[leave_game] No active gameId found for socket');
+          return;
         }
 
-        // Update user status back to available
+        console.log(`[leave_game] User ${userId} leaving game ${gameId}`);
+
+        const roomName = `game:${gameId}`;
+        socket.leave(roomName);
+        socket.data.gameId = undefined;
+
+        // Also clear from onlineUsers map
         if (userInfo) {
+          userInfo.gameId = undefined;
           userInfo.status = 'available';
-          broadcastOnlineUsers(io);
         }
+        broadcastOnlineUsers(io);
 
         console.log(`[leave_game] Handling opponent left for game ${gameId}`);
 
@@ -602,57 +620,23 @@ export const setupSocket = (io: Server) => {
 
     socket.on('quit_game', async (data: { gameId: string; userId: string }) => {
       try {
-        const { gameId, userId } = data;
-        console.log(`[quit_game] User ${userId} quitting game ${gameId}`);
-        
-        const game = await gameService.getGameDetails(gameId);
-        
-        // Check if game is still in progress
-        if (game.status !== 'in-progress') {
-          console.log(`[quit_game] Game not in progress, status: ${game.status}`);
+        const userId = (socket.data.userId as string | undefined) || data.userId;
+        const gameId = data.gameId || (socket.data.gameId as string | undefined);
+        if (!userId || !gameId) {
           return;
         }
 
-        // Find the opponent
-        const opponentPlayer = game.players.find((p) => p.userId !== userId);
-        const quittingPlayer = game.players.find((p) => p.userId === userId);
+        console.log(`[quit_game] Aliasing to leave_game. User ${userId} quitting game ${gameId}`);
 
-        if (!opponentPlayer || !quittingPlayer) {
-          console.log(`[quit_game] Could not find both players`);
-          return;
+        const userInfo = onlineUsers.get(socket.id);
+        if (userInfo) {
+          userInfo.status = 'available';
+          userInfo.gameId = undefined;
         }
+        socket.data.gameId = undefined;
+        socket.leave(`game:${gameId}`);
 
-        console.log(`[quit_game] Opponent: ${opponentPlayer.userId}, Quitter: ${quittingPlayer.userId}`);
-
-        // Mark opponent as winner
-        await prisma.gamePlayer.update({
-          where: { id: opponentPlayer.id },
-          data: { isWinner: true, score: 100, completedAt: new Date() },
-        });
-
-        // Mark quitter as loser
-        await prisma.gamePlayer.update({
-          where: { id: quittingPlayer.id },
-          data: { isWinner: false, score: 0, completedAt: new Date() },
-        });
-
-        // Update game status
-        await prisma.game.update({
-          where: { id: gameId },
-          data: { status: 'completed' },
-        });
-
-        // Notify both players in the room - use the game: prefix format
-        const roomName = `game:${gameId}`;
-        console.log(`[quit_game] Emitting player_quit to room: ${roomName}`);
-        io.to(roomName).emit('player_quit', {
-          quitterId: userId,
-          message: 'Opponent quit the game',
-          winnerId: opponentPlayer.userId,
-        });
-
-        console.log(`[quit_game] Cleanup for game ${gameId}`);
-        gameAnswers.delete(gameId);
+        await handleOpponentLeft(gameId, userId, io);
       } catch (error) {
         console.error('[quit_game] Error handling quit game:', error);
         socket.emit('error', error instanceof Error ? error.message : 'Unknown error');
@@ -661,11 +645,7 @@ export const setupSocket = (io: Server) => {
 
     socket.on('disconnect', async () => {
       console.log(`[disconnect] User disconnected: ${socket.id}`);
-      
-      // TEMPORARY TEST: Broadcast opponent_left to all clients to verify frontend receives it
-      console.log(`[disconnect] TESTING: Broadcasting opponent_left to all clients`);
-      io.emit('opponent_left', { result: 'win', gameId: socket.data.gameId, test: true });
-      
+
       const userId = socket.data.userId as string | undefined;
       let gameId = socket.data.gameId as string | undefined;
       
@@ -676,6 +656,8 @@ export const setupSocket = (io: Server) => {
           gameId = userInfo.gameId;
         }
       }
+
+      console.log('disconnect handler - gameId:', gameId);
 
       console.log(`[disconnect] userId: ${userId}, gameId: ${gameId}`);
 
