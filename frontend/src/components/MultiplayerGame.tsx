@@ -63,25 +63,6 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
   const { subject } = useGame();
   const t = translations[language];
 
-  const clearMultiplayerState = () => {
-    setQuestions([]);
-    setCurrentIndex(0);
-    setGameStatus('');
-    setGameResult(null);
-    setSelectedAnswer(null);
-    setAnswerExplanation(null);
-    setShowQuitDialog(false);
-    setOpponentLeft(false);
-    setPlayers([]);
-    setGameId('');
-  };
-
-  const goHomeAfterOpponentLeft = () => {
-    socket?.emit('update_user_status', 'available');
-    clearMultiplayerState();
-    onBack();
-  };
-
   const gradeLabel = selectedGrade === 1
     ? 'Primary (Grades 1-6)'
     : selectedGrade === 2
@@ -198,17 +179,12 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
   useEffect(() => {
     if (!socket) return;
 
-    console.log('opponent_left listener registered');
-
-    const handleOpponentLeft = (data: { message?: string; result?: string }) => {
-      console.log('opponent_left event received:', data);
+    socket.on('opponent_left', () => {
       setOpponentLeft(true);
-    };
-
-    socket.on('opponent_left', handleOpponentLeft);
+    });
 
     return () => {
-      socket.off('opponent_left', handleOpponentLeft);
+      socket.off('opponent_left');
     };
   }, [socket]);
 
@@ -352,15 +328,12 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
     }
   };
 
-  const handleQuitGame = () => {
-    console.log('[MultiplayerGame] Quitting game:', { gameId, userId: user?.id });
+  const handleQuit = () => {
     if (socket && gameId) {
       socket.emit('leave_game', { gameId });
     }
     setShowQuitDialog(false);
-    socket?.emit('update_user_status', 'available');
-    clearMultiplayerState();
-    onBack();
+    setTimeout(() => onBack(), 300);
   };
 
   const handleBackFromWaiting = () => {
@@ -709,20 +682,21 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
 
   // Victory popup for when opponent quits
   const victoryPopup = opponentLeft ? (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center px-4 z-50">
-      <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-2xl shadow-2xl p-6 sm:p-8 w-full max-w-sm">
-        <div className="text-center">
-          <div className="text-6xl sm:text-7xl mb-4">🏆</div>
-          <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-green-600">You Win!</h1>
-          <p className="text-gray-600 mb-8 text-base">Your opponent left the game</p>
-          
-          <button 
-            onClick={goHomeAfterOpponentLeft}
-            className="w-full bg-green-500 hover:bg-green-600 active:bg-green-700 text-white font-bold py-4 sm:py-5 rounded-2xl text-lg transition-colors min-h-[56px]"
-          >
-            Go Home
-          </button>
-        </div>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-2xl p-8 text-center mx-4">
+        <div className="text-6xl mb-4">🏆</div>
+        <h2 className="text-2xl font-bold text-green-600 mb-2">
+          You Win!
+        </h2>
+        <p className="text-gray-600 mb-6">
+          Your opponent left the game
+        </p>
+        <button
+          onClick={() => onBack()}
+          className="w-full bg-teal-500 text-white py-4 rounded-2xl text-lg font-bold"
+        >
+          Go Home
+        </button>
       </div>
     </div>
   ) : null;
@@ -742,7 +716,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
             Cancel
           </button>
           <button 
-            onClick={handleQuitGame}
+            onClick={handleQuit}
             className="flex-1 bg-red-500 hover:bg-red-600 active:bg-red-700 text-white font-bold py-4 rounded-xl transition-colors text-base min-h-[48px]"
           >
             Yes, Quit
