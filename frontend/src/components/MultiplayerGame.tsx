@@ -63,6 +63,10 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
   const { subject } = useGame();
   const t = translations[language];
 
+  useEffect(() => {
+    console.log('Frontend gameId:', gameId);
+  }, [gameId]);
+
   const gradeLabel = selectedGrade === 1
     ? 'Primary (Grades 1-6)'
     : selectedGrade === 2
@@ -179,11 +183,10 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
 
     socket.off('opponent_left');
     socket.on('opponent_left', (data: { gameId?: string; result?: string; message?: string }) => {
+      console.log('opponent_left received NO VALIDATION:', data);
       console.log('opponent_left event received:', data);
       console.log('currentGameId at time of event:', gameId);
-      if (gameId && data?.gameId === gameId) {
-        setOpponentLeft(true);
-      }
+      setOpponentLeft(true);
     });
 
     return () => {

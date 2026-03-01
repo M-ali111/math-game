@@ -48,6 +48,7 @@ const handleOpponentLeft = async (gameId: string, leavingUserId: string, io: Ser
     
     const game = await gameService.getGameDetails(gameId);
     console.log(`[handleOpponentLeft] Game found, status: ${game.status}`);
+    console.log('Current game status:', game.status);
     
     // Check if game is still active
     if (!isGameStillActive(game.status)) {
@@ -86,7 +87,9 @@ const handleOpponentLeft = async (gameId: string, leavingUserId: string, io: Ser
 
     // Notify the remaining player - use room name that matches join_game
     const roomName = `game:${gameId}`;
+    const room = io.sockets.adapter.rooms.get(roomName);
     console.log('opponent_left roomName:', roomName);
+    console.log('Room', gameId, 'has', room?.size, 'sockets');
     console.log('emitting opponent_left to room:', gameId);
     console.log(`[handleOpponentLeft] Emitting opponent_left to room: ${roomName}`);
     io.to(roomName).emit('opponent_left', {
@@ -94,6 +97,21 @@ const handleOpponentLeft = async (gameId: string, leavingUserId: string, io: Ser
       result: 'win',
       gameId,
     });
+
+    const remainingPlayer = game.players.find((player) => player.userId !== leavingUserId);
+    if (remainingPlayer) {
+      const remainingSocketIds = Array.from(onlineUsers.entries())
+        .filter(([, info]) => info.userId === remainingPlayer.userId)
+        .map(([socketId]) => socketId);
+
+      for (const targetSocketId of remainingSocketIds) {
+        io.to(targetSocketId).emit('opponent_left', {
+          message: 'Your opponent left the game',
+          result: 'win',
+          gameId,
+        });
+      }
+    }
 
     for (const userInfo of onlineUsers.values()) {
       if (game.players.some((player) => player.userId === userInfo.userId)) {
@@ -232,9 +250,11 @@ export const setupSocket = (io: Server) => {
         }
 
         console.log(`[join_game] User ${userId} joining game ${gameId}`);
+        console.log('Player joining room:', gameId, 'socketId:', socket.id);
 
         // Track the game this socket is in (both in socket data and online users map)
         socket.data.gameId = gameId;
+        console.log('Set socket.data.gameId:', socket.data.gameId);
         const userInfo = onlineUsers.get(socket.id);
         if (userInfo) {
           userInfo.gameId = gameId;
@@ -599,9 +619,20 @@ export const setupSocket = (io: Server) => {
 
         console.log('leave_game received:', gameId);
 
+        const game = await prisma.game.findUnique({
+          where: { id: gameId },
+          select: { status: true },
+        });
+        console.log('Current game status:', game?.status);
+        if (!game || game.status !== 'active') {
+          return;
+        }
+
         console.log(`[leave_game] User ${userId} leaving game ${gameId}`);
 
         const roomName = `game:${gameId}`;
+        const room = io.sockets.adapter.rooms.get(roomName);
+        console.log('Room', gameId, 'has', room?.size, 'sockets');
         socket.leave(roomName);
         socket.data.gameId = undefined;
 
@@ -671,6 +702,7 @@ export const setupSocket = (io: Server) => {
           where: { id: gameId },
           select: { status: true },
         });
+        console.log('Current game status:', game?.status);
 
         if (!game || game.status !== 'active') {
           console.log(`[disconnect] Game not active for gameId ${gameId}, skipping opponent_left`);
