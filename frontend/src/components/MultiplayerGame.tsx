@@ -111,17 +111,18 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
     });
 
     socket.on('round_result', (data) => {
-      console.log('Round winner:', data.winner);
-      // Use functional update to avoid stale closure
-      setCurrentIndex((prevIndex) => {
-        if (prevIndex < questions.length - 1) {
-          setSelectedAnswer(null);
-          setTimeStarted(Date.now());
-          setAnswerExplanation(null);
-          return prevIndex + 1;
-        }
-        return prevIndex;
-      });
+      console.log('[MultiplayerGame] round_result received:', data);
+      console.log('[MultiplayerGame] Round winner:', data.winner);
+      // Note: We don't increment currentIndex here anymore
+      // The backend will emit next_question event which will handle progression
+    });
+
+    socket.on('next_question', (data) => {
+      console.log('[MultiplayerGame] next_question received:', data);
+      setCurrentIndex(data.questionIndex);
+      setSelectedAnswer(null);
+      setTimeStarted(Date.now());
+      setAnswerExplanation(null);
     });
 
     socket.on('game_ended', (data) => {
@@ -167,6 +168,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
       socket.off('game_started');
       socket.off('answer_submitted');
       socket.off('round_result');
+      socket.off('next_question');
       socket.off('game_ended');
       socket.off('online_users');
       socket.off('game_request_received');
@@ -294,6 +296,14 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
 
     const timeToAnswer = Math.round((Date.now() - timeStarted) / 1000);
     const currentQuestion = questions[currentIndex];
+
+    console.log('[MultiplayerGame] Submitting answer:', {
+      gameId,
+      questionId: currentQuestion.id,
+      questionIndex: currentIndex,
+      selectedAnswer: answerIndex,
+      timeToAnswer,
+    });
 
     socket.emit('submit_answer', {
       gameId,

@@ -372,6 +372,11 @@ export const setupSocket = (io: Server) => {
           const currentQuestionIndex = game.questions.findIndex(q => q.questionId === questionId);
           const nextQuestionIndex = currentQuestionIndex + 1;
 
+          console.log(`[submit_answer] Player ${userId} answered for game ${gameId}`);
+          console.log(`[submit_answer] Answers so far:`, Array.from(answers.entries()));
+          console.log(`[submit_answer] Both players answered: true`);
+          console.log(`[submit_answer] Current question index: ${currentQuestionIndex}, Next: ${nextQuestionIndex}`);
+
           io.to(`game:${gameId}`).emit('round_result', {
             winner,
             nextQuestionIndex,
@@ -382,6 +387,7 @@ export const setupSocket = (io: Server) => {
 
           // If that was the last question, end the game automatically
           if (nextQuestionIndex >= game.questions.length) {
+            console.log(`[submit_answer] Game ${gameId} completed - all questions answered`);
             // Calculate scores for both players
             const allAnswers = await prisma.gameAnswer.findMany({
               where: { gameId },
@@ -472,6 +478,28 @@ export const setupSocket = (io: Server) => {
 
             // Clean up
             gameAnswers.delete(gameId);
+          } else {
+            // Send next question after short delay
+            console.log(`[submit_answer] Moving to question index: ${nextQuestionIndex}`);
+            setTimeout(() => {
+              const nextQuestion = game.questions[nextQuestionIndex];
+              if (nextQuestion) {
+                const questionData = {
+                  id: nextQuestion.question.id,
+                  text: nextQuestion.question.text,
+                  options: JSON.parse(nextQuestion.question.options),
+                  difficulty: nextQuestion.question.difficulty,
+                  explanation: (nextQuestion.question as { explanation?: string | null }).explanation ?? null,
+                };
+                
+                console.log(`[submit_answer] Emitting next_question for game ${gameId}, question index ${nextQuestionIndex}`);
+                io.to(`game:${gameId}`).emit('next_question', {
+                  question: questionData,
+                  questionIndex: nextQuestionIndex,
+                  totalQuestions: game.questions.length,
+                });
+              }
+            }, 2000);  // 2 second delay to show round result
           }
         }
       } catch (error: any) {
