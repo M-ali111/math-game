@@ -56,6 +56,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
   const [outgoingRequestTo, setOutgoingRequestTo] = useState<string | null>(null);
   const [showQuitDialog, setShowQuitDialog] = useState(false);
   const [opponentLeft, setOpponentLeft] = useState(false);
+  const [gameStarted, setGameStarted] = useState(false);
   const { request } = useApi();
   const { socket, connected } = useGameSocket();
   const { user } = useAuth();
@@ -90,6 +91,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
 
     socket.on('game_started', (data) => {
       console.log('[MultiplayerGame] game_started event received, listeners should be registered');
+      setGameStarted(true);
       setQuestions(data.questions);
       setMode('playing');
       setGameStatus('playing');
@@ -210,23 +212,17 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
   useEffect(() => {
     if (!socket) return;
 
-    const gameIsActive = Boolean(gameId) && (mode === 'waiting' || mode === 'playing');
-    if (!gameIsActive) return;
-
-    const leaveCurrentGame = () => {
+    return () => {
+      if (!gameStarted || !gameId) {
+        return;
+      }
       socket.emit('leave_game', { gameId });
     };
-
-    window.addEventListener('beforeunload', leaveCurrentGame);
-
-    return () => {
-      leaveCurrentGame();
-      window.removeEventListener('beforeunload', leaveCurrentGame);
-    };
-  }, [socket, gameId, mode]);
+  }, [socket, gameStarted, gameId]);
 
   const createGame = async (grade: number) => {
     setOpponentLeft(false);
+    setGameStarted(false);
     if (!subject) {
       alert('Subject not selected');
       return;
@@ -253,6 +249,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
 
   const joinGame = async () => {
     setOpponentLeft(false);
+    setGameStarted(false);
     if (!joinGameId.trim()) {
       alert('Please enter a game ID');
       return;
@@ -333,6 +330,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
 
   const handleSelectGameAction = (action: PendingAction) => {
     setOpponentLeft(false);
+    setGameStarted(false);
     if (subject === 'logic') {
       // For logic, skip grade selection and use grade 0
       setSelectedGrade(0 as unknown as 1);
@@ -351,7 +349,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
   };
 
   const handleQuit = () => {
-    if (socket && gameId) {
+    if (gameStarted && socket && gameId) {
       socket.emit('leave_game', { gameId });
     }
     setShowQuitDialog(false);
