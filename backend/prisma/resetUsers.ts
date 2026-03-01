@@ -1,24 +1,26 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client'
+const prisma = new PrismaClient()
 
-const prisma = new PrismaClient();
-
-async function main() {
-  console.log('Resetting user data...');
-
-  await prisma.gameAnswer.deleteMany();
-  await prisma.gameQuestion.deleteMany();
-  await prisma.gamePlayer.deleteMany();
-  await prisma.game.deleteMany();
-  await prisma.user.deleteMany();
-
-  console.log('User data reset complete.');
+async function resetUsers() {
+  console.log("Starting database reset...")
+  
+  const answers = await prisma.gameAnswer.deleteMany({})
+  console.log(`Deleted ${answers.count} game answers`)
+  
+  const gameQuestions = await prisma.gameQuestion.deleteMany({})
+  console.log(`Deleted ${gameQuestions.count} game questions`)
+  
+  const gamePlayers = await prisma.gamePlayer.deleteMany({})
+  console.log(`Deleted ${gamePlayers.count} game players`)
+  
+  const games = await prisma.game.deleteMany({})
+  console.log(`Deleted ${games.count} games`)
+  
+  const users = await prisma.user.deleteMany({})
+  console.log(`Deleted ${users.count} users`)
+  
+  console.log("✅ Reset complete! Questions kept intact.")
+  await prisma.$disconnect()
 }
 
-main()
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+resetUsers().catch(console.error)
