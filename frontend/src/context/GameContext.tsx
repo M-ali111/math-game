@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useMemo, useState, useCallback, ReactNode } from 'react';
 
 export type Subject = 'math' | 'logic';
 export type GameMode = 'solo' | 'multiplayer';
@@ -30,16 +30,16 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [selectedGrade, setSelectedGrade] = useState<Grade | null>(null);
   const [currentStep, setCurrentStep] = useState<GameFlowStep>('subject');
 
-  const setSubject = (next: Subject) => {
+  const setSubject = useCallback((next: Subject) => {
     setSubjectState(next);
     localStorage.setItem(SUBJECT_STORAGE_KEY, next);
-  };
+  }, []);
 
-  const resetGameFlow = () => {
+  const resetGameFlow = useCallback(() => {
     setSelectedMode(null);
     setSelectedGrade(null);
     setCurrentStep('subject');
-  };
+  }, []);
 
   const value = useMemo(
     () => ({
@@ -53,7 +53,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setCurrentStep,
       resetGameFlow,
     }),
-    [subject, selectedMode, selectedGrade, currentStep]
+    [subject, setSubject, selectedMode, selectedGrade, currentStep, resetGameFlow]
   );
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

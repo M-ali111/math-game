@@ -28,6 +28,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setUser(null);
     setToken(null);
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('zirekIqJustSignedUp');
   };
 
   const isTokenExpired = (jwtToken: string): boolean => {
@@ -64,13 +66,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
 
         if (!response.ok) {
+          // Handle 400, 401, or any other error by clearing auth
+          console.warn('Session restore failed:', response.status);
           clearAuth();
           return;
         }
 
         const user = await response.json();
         setUser(user);
-      } catch {
+      } catch (error) {
+        console.error('Session restore error:', error);
         clearAuth();
       }
     };
