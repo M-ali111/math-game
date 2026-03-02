@@ -7,6 +7,8 @@ import { GameProvider } from './context/GameContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import './index.css';
 
+console.log('[main.tsx] React app initialization starting...');
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ErrorBoundary>
@@ -20,3 +22,5 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </ErrorBoundary>
   </React.StrictMode>,
 );
+
+console.log('[main.tsx] React app mounted to DOM');

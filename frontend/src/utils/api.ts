@@ -4,7 +4,18 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 const API_BASE = `${API_URL}/api`;
 
 export const useApi = () => {
-  const { token } = useAuth();
+  let token: string | null;
+  
+  try {
+    const auth = useAuth();
+    token = auth.token;
+  } catch (error) {
+    // If useAuth fails (provider not mounted), use token from localStorage
+    token = localStorage.getItem('token');
+    if (!token) {
+      console.warn('[useApi] No token available - requests may fail. Ensure AuthProvider wraps this component.');
+    }
+  }
 
   const request = async (endpoint: string, options: RequestInit = {}) => {
     const headers: HeadersInit = {
