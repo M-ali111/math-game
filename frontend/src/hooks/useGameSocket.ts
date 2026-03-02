@@ -6,27 +6,11 @@ export const useGameSocket = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [connected, setConnected] = useState(false);
   
-  console.log('[useGameSocket] Hook called');
-  
-  let token: string | null = null;
-  
-  try {
-    const auth = useAuth();
-    token = auth.token;
-    console.log('[useGameSocket] Got token from AuthProvider:', !!token);
-  } catch (error) {
-    // If useAuth fails (provider not mounted), try localStorage
-    token = localStorage.getItem('token');
-    if (!token) {
-      console.warn('[useGameSocket] No token available. Ensure AuthProvider wraps this component.');
-      return { socket: null, connected: false };
-    }
-    console.log('[useGameSocket] Got token from localStorage');
-  }
+  // Call hook unconditionally at top level
+  const { token } = useAuth();
 
   useEffect(() => {
     if (!token) {
-      console.log('[useGameSocket] No token, skipping socket initialization');
       return;
     }
 
