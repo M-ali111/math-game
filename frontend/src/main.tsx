@@ -10,17 +10,15 @@ import './index.css';
 console.log('[main.tsx] React app initialization starting...');
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <ErrorBoundary>
-      <AuthProvider>
-        <LanguageProvider>
-          <GameProvider>
-            <App />
-          </GameProvider>
-        </LanguageProvider>
-      </AuthProvider>
-    </ErrorBoundary>
-  </React.StrictMode>,
+  <ErrorBoundary>
+    <AuthProvider>
+      <LanguageProvider>
+        <GameProvider>
+          <App />
+        </GameProvider>
+      </LanguageProvider>
+    </AuthProvider>
+  </ErrorBoundary>,
 );
 
 console.log('[main.tsx] React app mounted to DOM');
