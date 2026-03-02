@@ -13,9 +13,6 @@ const STORAGE_KEY = 'language';
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<LanguageCode>('english');
 
-  // DIAGNOSTIC LOG
-  console.log('[LanguageProvider] Mounted - language:', language);
-
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY) as LanguageCode | null;
     if (stored === 'english' || stored === 'russian' || stored === 'kazakh') {
@@ -36,9 +33,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 export const useLanguage = () => {
   const context = useContext(LanguageContext);
   if (!context) {
-    console.error('[useLanguage] Called outside LanguageProvider! Context is undefined.');
     throw new Error('useLanguage must be used within a LanguageProvider');
   }
-  console.log('[useLanguage] Hook called, language:', context.language);
   return context;
 };

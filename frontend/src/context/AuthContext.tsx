@@ -24,9 +24,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
 
-  // DIAGNOSTIC LOG
-  console.log('[AuthProvider] Mounted - token initialized:', !!token);
-
   const clearAuth = () => {
     setUser(null);
     setToken(null);
@@ -136,9 +133,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    console.error('[useAuth] Called outside AuthProvider! Context is undefined.');
     throw new Error('useAuth must be used within an AuthProvider');
   }
-  console.log('[useAuth] Hook called, user:', context.user?.username || 'null');
   return context;
 };

@@ -30,9 +30,6 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [selectedGrade, setSelectedGrade] = useState<Grade | null>(null);
   const [currentStep, setCurrentStep] = useState<GameFlowStep>('subject');
 
-  // DIAGNOSTIC LOG
-  console.log('[GameProvider] Mounted - subject:', subject, 'currentStep:', currentStep);
-
   const setSubject = useCallback((next: Subject) => {
     setSubjectState(next);
     localStorage.setItem(SUBJECT_STORAGE_KEY, next);
@@ -56,7 +53,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setCurrentStep,
       resetGameFlow,
     }),
-    [subject, setSubject, selectedMode, setSelectedMode, selectedGrade, setSelectedGrade, currentStep, setCurrentStep, resetGameFlow]
+    [subject, setSubject, selectedMode, selectedGrade, currentStep, resetGameFlow]
   );
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
@@ -65,9 +62,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 export const useGame = () => {
   const context = useContext(GameContext);
   if (!context) {
-    console.error('[useGame] Called outside GameProvider! Context is undefined.');
     throw new Error('useGame must be used within a GameProvider');
   }
-  console.log('[useGame] Hook called, subject:', context.subject);
   return context;
 };
