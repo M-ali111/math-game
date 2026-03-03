@@ -2,7 +2,7 @@ import React, { createContext, useContext, useMemo, useState, useCallback, React
 
 export type Subject = 'math' | 'logic' | 'english';
 export type GameMode = 'solo' | 'multiplayer';
-export type Grade = 1 | 2 | 3;
+export type Grade = 0 | 1 | 2 | 3;
 export type GameFlowStep = 'subject' | 'mode' | 'grade' | 'language' | 'playing';
 
 interface GameContextType {
