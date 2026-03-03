@@ -79,14 +79,27 @@ const LOGIC_TOPICS_BY_GRADE: Record<number, string[]> = {
   3: ['complex patterns', 'matrix reasoning', 'multi-step logical deductions', 'verbal reasoning', 'abstract reasoning'],
 };
 
+const ENGLISH_TOPICS_BY_GRADE: Record<number, string[]> = {
+  1: ['vocabulary building', 'basic grammar', 'simple sentences', 'reading comprehension', 'spelling', 'word order', 'pronouns', 'nouns and verbs'],
+  2: ['tenses (present, past, future)', 'adjectives and adverbs', 'reading passages', 'vocabulary synonyms', 'sentence structure', 'articles (a, an, the)', 'prepositions'],
+  3: ['complex grammar rules', 'reading comprehension with questions', 'essay understanding', 'vocabulary antonyms', 'subject-verb agreement', 'modal verbs', 'reported speech'],
+};
+
 function getGradeLabel(grade: number): string {
   return GRADE_LABELS[grade] || GRADE_LABELS[1];
 }
 
 function pickTopic(grade: number, subject: QuestionSubject = 'math'): string {
-  const topics = subject === 'logic' 
-    ? (LOGIC_TOPICS_BY_GRADE[grade] || LOGIC_TOPICS_BY_GRADE[1])
-    : (TOPICS_BY_GRADE[grade] || TOPICS_BY_GRADE[1]);
+  if (subject === 'logic') {
+    const topics = LOGIC_TOPICS_BY_GRADE[grade] || LOGIC_TOPICS_BY_GRADE[1];
+    return topics[Math.floor(Math.random() * topics.length)];
+  }
+  if (subject === 'english') {
+    const topics = ENGLISH_TOPICS_BY_GRADE[grade] || ENGLISH_TOPICS_BY_GRADE[1];
+    return topics[Math.floor(Math.random() * topics.length)];
+  }
+  // Default to math
+  const topics = TOPICS_BY_GRADE[grade] || TOPICS_BY_GRADE[1];
   return topics[Math.floor(Math.random() * topics.length)];
 }
 
