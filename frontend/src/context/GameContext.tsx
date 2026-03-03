@@ -55,7 +55,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setCurrentStep,
       resetGameFlow,
     }),
-    [subject, setSubject, selectedMode, setSelectedMode, selectedGrade, setSelectedGrade, currentStep, setCurrentStep, resetGameFlow]
+    [subject, setSubject, selectedMode, selectedGrade, currentStep, resetGameFlow]
   );
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

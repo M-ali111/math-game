@@ -4,20 +4,8 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 const API_BASE = `${API_URL}/api`;
 
 export const useApi = () => {
-  // Safely call useAuth with error protection
-  let token: string | null = null;
-  
-  try {
-    const auth = useAuth();
-    token = auth.token;
-  } catch (error) {
-    // useAuth failed (not inside provider)
-    // Fall back to localStorage
-    token = localStorage.getItem('token');
-    if (!token) {
-      console.warn('[useApi] Called outside AuthProvider, using localStorage token');
-    }
-  }
+  // Call hook unconditionally at top level (Rules of Hooks)
+  const { token } = useAuth();
 
   const request = async (endpoint: string, options: RequestInit = {}) => {
     const headers: HeadersInit = {
