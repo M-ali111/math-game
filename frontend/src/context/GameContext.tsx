@@ -64,7 +64,9 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 export const useGame = () => {
   const context = useContext(GameContext);
   if (!context) {
+    console.error('[useGame] Called outside GameProvider! Context is undefined.');
     throw new Error('useGame must be used within a GameProvider');
   }
+  console.log('[useGame] Hook called, subject:', context.subject);
   return context;
 };
