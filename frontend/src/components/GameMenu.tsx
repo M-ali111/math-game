@@ -4,7 +4,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { ProfileScreen } from './ProfileScreen';
 
 interface GameMenuProps {
-  onSelectSubject: (subject: 'math' | 'logic') => void;
+  onSelectSubject: (subject: 'math' | 'logic' | 'english') => void;
   onSelectNav: (nav: 'stats' | 'leaderboard') => void;
   onLogout: () => void;
 }
@@ -15,7 +15,7 @@ export const GameMenu: React.FC<GameMenuProps> = ({ onSelectSubject, onSelectNav
   const [activeTab, setActiveTab] = useState<'home' | 'profile'>('home');
   const [rank] = useState<number | null>(null);
   const [lastGameSettings, setLastGameSettings] = useState<{
-    subject: 'math' | 'logic';
+    subject: 'math' | 'logic' | 'english';
     grade: number;
     language: 'english' | 'russian' | 'kazakh';
     mode: 'solo';
@@ -53,7 +53,7 @@ export const GameMenu: React.FC<GameMenuProps> = ({ onSelectSubject, onSelectNav
 
   const quickPlayLabel = useMemo(() => {
     if (!lastGameSettings) return '';
-    const subjectLabel = lastGameSettings.subject === 'math' ? 'Math' : 'Logic';
+    const subjectLabel = lastGameSettings.subject === 'math' ? 'Math' : lastGameSettings.subject === 'logic' ? 'Logic' : 'English';
     const gradeLabel =
       lastGameSettings.grade === 1
         ? 'Primary 1-6'
@@ -217,6 +217,25 @@ export const GameMenu: React.FC<GameMenuProps> = ({ onSelectSubject, onSelectNav
             <div className="mt-3 flex gap-1 opacity-25">
               {Array.from({ length: 10 }).map((_, idx) => (
                 <span key={idx} className="w-2 h-2 rounded-full bg-white" />
+              ))}
+            </div>
+          </button>
+
+          <button
+            onClick={() => onSelectSubject('english')}
+            className="w-full bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-2xl py-8 px-5 text-left shadow-md min-h-[148px] hover:shadow-lg hover:scale-105 transition-all duration-200"
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="text-4xl mb-2">📚</div>
+                <h2 className="text-2xl font-bold">English</h2>
+                <p className="text-sm font-medium text-amber-100 mt-2">Grammar, Reading & Vocabulary</p>
+              </div>
+              <span className="text-3xl">→</span>
+            </div>
+            <div className="mt-3 grid grid-cols-6 gap-1 opacity-20">
+              {Array.from({ length: 12 }).map((_, idx) => (
+                <span key={idx} className="h-1 bg-white rounded" />
               ))}
             </div>
           </button>
