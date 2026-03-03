@@ -96,6 +96,15 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
     return () => clearInterval(interval);
   }, [gameCompleted, gameResult]);
 
+  // Calculate derived values at top level (before any conditional returns)
+  const currentQuestion = questions[currentIndex];
+  const progressPercent = ((currentIndex + 1) / questions.length) * 100;
+  const timerColor = visualTimeLeft > 20 ? '#22c55e' : visualTimeLeft > 10 ? '#f59e0b' : '#ef4444';
+  const timerStrokeDashoffset = useMemo(() => {
+    const circumference = 2 * Math.PI * 26;
+    return circumference - (visualTimeLeft / 30) * circumference;
+  }, [visualTimeLeft]);
+
   const startGame = async (grade: number, gameSubject: 'math' | 'logic') => {
     setLoading(true);
     setWrongReviews([]);
@@ -347,14 +356,6 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
       </div>
     );
   }
-
-  const currentQuestion = questions[currentIndex];
-  const progressPercent = ((currentIndex + 1) / questions.length) * 100;
-  const timerColor = visualTimeLeft > 20 ? '#22c55e' : visualTimeLeft > 10 ? '#f59e0b' : '#ef4444';
-  const timerStrokeDashoffset = useMemo(() => {
-    const circumference = 2 * Math.PI * 26;
-    return circumference - (visualTimeLeft / 30) * circumference;
-  }, [visualTimeLeft]);
 
   const getOptionClasses = (index: number) => {
     if (awaitingNext && revealedCorrectAnswer === index) {
