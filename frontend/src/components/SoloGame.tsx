@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useApi } from '../utils/api';
-import { GradeSelector } from './GradeSelector';
 import { useLanguage } from '../context/LanguageContext';
 import { useGame } from '../context/GameContext';
 import { translations } from '../utils/translations';
@@ -29,7 +28,6 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
   const [loading, setLoading] = useState(false);
   const [gameResult, setGameResult] = useState<any>(null);
   const [timeStarted, setTimeStarted] = useState<number>(0);
-  const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
   const [answerExplanation, setAnswerExplanation] = useState<string | null>(null);
   const [awaitingNext, setAwaitingNext] = useState(false);
   const [answerResult, setAnswerResult] = useState<'idle' | 'wrong' | 'correct'>('idle');
@@ -40,7 +38,7 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
   const [animatedXp, setAnimatedXp] = useState(0);
   const { request } = useApi();
   const { language } = useLanguage();
-  const { subject } = useGame();
+  const { subject, selectedGrade } = useGame();
   const t = translations[language];
 
   const gradeLabel = selectedGrade === 1
@@ -58,7 +56,7 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
       // For logic, auto-start with grade 0 (general level)
       startGame(0, 'logic');
     }
-  }, [selectedGrade, subject]);
+  }, [selectedGrade, subject!, gradeLabel]);
 
   useEffect(() => {
     if (!gameStarted || gameCompleted) return;
@@ -114,6 +112,7 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
     setSelectedAnswer(null);
     setAnswerExplanation(null);
     setAwaitingNext(false);
+    // selectedGrade comes from GameContext, not local state
     setAnswerResult('idle');
     setRevealedCorrectAnswer(null);
     setGameCompleted(false);
@@ -233,17 +232,7 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
     }
   };
 
-  if (subject === 'math' && selectedGrade === null) {
-    return (
-      <GradeSelector
-        title={t.chooseGrade}
-        onSelect={(grade) => {
-          setSelectedGrade(grade);
-        }}
-        onBack={onBack}
-      />
-    );
-  }
+
 
   if (!gameStarted || loading) {
     return (
@@ -338,7 +327,7 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
             <button
               onClick={() => {
                 if (subject) {
-                  startGame(selectedGrade ?? 0, subject);
+                  startGame(selectedGrade ?? 0, subject as 'math' | 'logic');
                 }
               }}
               className="w-full bg-teal-500 text-white font-bold rounded-2xl min-h-[56px] text-lg shadow-sm hover:scale-105 transition-transform duration-200"
