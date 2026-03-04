@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { useApi } from '../utils/api';
 
 interface DashboardResponse {
@@ -121,23 +120,8 @@ export const Stats: React.FC<StatsProps> = ({ onBack }) => {
             </div>
           </div>
 
-          {/* Subject & Mode Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Subject Accuracy */}
-            <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6">
-              <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-4">📊 By Subject</h2>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center p-3 bg-blue-50 rounded-xl">
-                  <span className="text-gray-700 font-semibold text-sm sm:text-base">🔢 Mathematics</span>
-                  <span className="text-lg sm:text-xl font-bold text-blue-600">{dashboard.subjectStats.mathAccuracy}%</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-purple-50 rounded-xl">
-                  <span className="text-gray-700 font-semibold text-sm sm:text-base">🧠 Logic & IQ</span>
-                  <span className="text-lg sm:text-xl font-bold text-purple-600">{dashboard.subjectStats.logicAccuracy}%</span>
-                </div>
-              </div>
-            </div>
-
+          {/* Mode Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Solo Stats */}
             <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6">
               <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-4">👤 Solo Mode</h2>
@@ -174,24 +158,6 @@ export const Stats: React.FC<StatsProps> = ({ onBack }) => {
                   <span className="text-lg sm:text-xl font-bold text-red-600">{dashboard.multiplayerStats.losses}</span>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* Performance Chart */}
-          <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6">
-            <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-4">📈 Performance Over Time (Last 30 Days)</h2>
-            <div className="w-full h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={dashboard.performanceOverTime}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-                  <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} />
-                  <Tooltip formatter={(value) => [value === null ? 'N/A' : `${value}%`, 'Avg Score']} />
-                  <Legend wrapperStyle={{ fontSize: '12px' }} />
-                  <Line type="monotone" dataKey="soloAverageScore" name="Solo" stroke="#3b82f6" strokeWidth={2} connectNulls />
-                  <Line type="monotone" dataKey="multiplayerAverageScore" name="Multiplayer" stroke="#10b981" strokeWidth={2} connectNulls />
-                </LineChart>
-              </ResponsiveContainer>
             </div>
           </div>
 
