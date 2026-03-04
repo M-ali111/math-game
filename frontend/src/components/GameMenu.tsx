@@ -126,8 +126,8 @@ export const GameMenu: React.FC<GameMenuProps> = ({ onSelectSubject, onSelectNav
           username={user?.username || 'Player'}
           data={{
             totalGames,
-            currentStreak,
-            bestStreak: longestStreak,
+            currentStreak: streakData.currentStreak,
+            bestStreak: streakData.longestStreak,
             mathAccuracy,
             logicAccuracy,
             multiplayerWinRate: winRate,
@@ -177,8 +177,8 @@ export const GameMenu: React.FC<GameMenuProps> = ({ onSelectSubject, onSelectNav
       <div className="bg-white shadow-sm px-4 py-4 text-center">
         <div className="text-xl font-bold text-gray-900">🧠 ZirekIQ</div>
         <p className="text-lg font-bold text-gray-900 mt-2">Welcome back, {user?.username}! 👋</p>
-        {currentStreak > 0 && (
-          <p className="text-sm font-medium text-gray-600 mt-1">🔥 {currentStreak} day streak</p>
+        {streakData.currentStreak > 0 && (
+          <p className="text-sm font-medium text-gray-600 mt-1">🔥 {streakData.currentStreak} day streak</p>
         )}
       </div>
 
