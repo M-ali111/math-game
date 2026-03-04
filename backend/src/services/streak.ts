@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient() as any;
 
 const GAMES_PER_DAY_TARGET = 3;
 
@@ -36,29 +36,33 @@ function getDateNDaysAgo(days: number): string {
 export async function recordGameForDay(userId: string): Promise<void> {
   const today = getTodayDate();
   
-  // Find or create streak day record
-  const streakDay = await prisma.streakDay.upsert({
-    where: {
-      userId_date: {
+  try {
+    // Find or create streak day record
+    const streakDay = await prisma.streakDay.upsert({
+      where: {
+        userId_date: {
+          userId,
+          date: today,
+        },
+      },
+      update: {
+        gameCount: {
+          increment: 1,
+        },
+      },
+      create: {
         userId,
         date: today,
+        gameCount: 1,
       },
-    },
-    update: {
-      gameCount: {
-        increment: 1,
-      },
-    },
-    create: {
-      userId,
-      date: today,
-      gameCount: 1,
-    },
-  });
+    });
 
-  // Check if user completed today's goal (3+ games)
-  if (streakDay.gameCount >= GAMES_PER_DAY_TARGET) {
-    await updateStreakStatus(userId);
+    // Check if user completed today's goal (3+ games)
+    if (streakDay.gameCount >= GAMES_PER_DAY_TARGET) {
+      await updateStreakStatus(userId);
+    }
+  } catch (error) {
+    console.error('Error recording game for streak:', error);
   }
 }
 
@@ -66,74 +70,78 @@ export async function recordGameForDay(userId: string): Promise<void> {
  * Calculate and update user's streak based on consecutive days
  */
 export async function updateStreakStatus(userId: string): Promise<void> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    include: {
-      streakDays: {
-        orderBy: { date: 'desc' },
-        take: 30, // Look back 30 days max
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        streakDays: {
+          orderBy: { date: 'desc' },
+          take: 30, // Look back 30 days max
+        },
       },
-    },
-  });
+    });
 
-  if (!user) return;
+    if (!user) return;
 
-  // Find consecutive days with 3+ games
-  let currentStreak = 0;
-  let maxStreak = 0;
+    // Find consecutive days with 3+ games
+    let currentStreak = 0;
+    let maxStreak = 0;
 
-  const today = getTodayDate();
-  let checkDate = today;
+    const today = getTodayDate();
+    const yesterday = getYesterdayDate();
 
-  // Check if today has games, if not check yesterday
-  const hasGameToday = user.streakDays.some(sd => sd.date === today && sd.gameCount >= GAMES_PER_DAY_TARGET);
-  const hasGameYesterday = user.streakDays.some(sd => sd.date === getYesterdayDate() && sd.gameCount >= GAMES_PER_DAY_TARGET);
+    // Check if today has games, if not check yesterday
+    const hasGameToday = user.streakDays.some((sd: any) => sd.date === today && sd.gameCount >= GAMES_PER_DAY_TARGET);
+    const hasGameYesterday = user.streakDays.some((sd: any) => sd.date === yesterday && sd.gameCount >= GAMES_PER_DAY_TARGET);
 
-  // Only count streak if user played today or yesterday
-  if (!hasGameToday && !hasGameYesterday) {
-    // Streak is broken - reset to 0
+    // Only count streak if user played today or yesterday
+    if (!hasGameToday && !hasGameYesterday) {
+      // Streak is broken - reset to 0
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          currentStreak: 0,
+          lastStreakDate: null,
+        },
+      });
+      return;
+    }
+
+    // Starting point for streak calculation
+    let checkDate = hasGameToday ? today : yesterday;
+
+    // Count consecutive days backwards
+    for (let i = 0; i < 365; i++) {
+      const dateToCheck = getDateNDaysAgo(i);
+      const hasGameOnDate = user.streakDays.some(
+        (sd: any) => sd.date === dateToCheck && sd.gameCount >= GAMES_PER_DAY_TARGET
+      );
+
+      if (hasGameOnDate) {
+        currentStreak++;
+        maxStreak = Math.max(maxStreak, currentStreak);
+      } else {
+        // Streak broken if gap is more than 1 day
+        if (i > 1 || (i === 1 && !hasGameToday)) {
+          break;
+        }
+      }
+    }
+
+    // Update user's streak
+    const newLongestStreak = Math.max((user as any).longestStreak || 0, currentStreak);
+
     await prisma.user.update({
       where: { id: userId },
       data: {
-        currentStreak: 0,
-        lastStreakDate: null,
+        currentStreak,
+        longestStreak: newLongestStreak,
+        lastStreakDate: hasGameToday ? today : yesterday,
       },
     });
-    return;
+  } catch (error) {
+    console.error('Error updating streak status:', error);
   }
-
-  // Starting point for streak calculation
-  checkDate = hasGameToday ? today : getYesterdayDate();
-
-  // Count consecutive days backwards
-  for (let i = 0; i < 365; i++) {
-    const dateToCheck = getDateNDaysAgo(i);
-    const hasGameOnDate = user.streakDays.some(
-      sd => sd.date === dateToCheck && sd.gameCount >= GAMES_PER_DAY_TARGET
-    );
-
-    if (hasGameOnDate) {
-      currentStreak++;
-      maxStreak = Math.max(maxStreak, currentStreak);
-    } else {
-      // Streak broken if gap is more than 1 day
-      if (i > 1 || (i === 1 && !hasGameToday)) {
-        break;
-      }
-    }
-  }
-
-  // Update user's streak
-  const newLongestStreak = Math.max(user.longestStreak || 0, currentStreak);
-
-  await prisma.user.update({
-    where: { id: userId },
-    data: {
-      currentStreak,
-      longestStreak: newLongestStreak,
-      lastStreakDate: hasGameToday ? today : getYesterdayDate(),
-    },
-  });
 }
 
 /**
@@ -145,11 +153,42 @@ export async function getUserStreak(userId: string): Promise<{
   todayGameCount: number;
   lastStreakDate: string | null;
 }> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-  });
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
 
-  if (!user) {
+    if (!user) {
+      return {
+        currentStreak: 0,
+        longestStreak: 0,
+        todayGameCount: 0,
+        lastStreakDate: null,
+      };
+    }
+
+    const today = getTodayDate();
+    const todayRecord = await prisma.streakDay.findUnique({
+      where: {
+        userId_date: {
+          userId,
+          date: today,
+        },
+      },
+    });
+
+    const lastStreakDate = (user as any).lastStreakDate;
+    
+    return {
+      currentStreak: ((user as any).currentStreak || 0) as number,
+      longestStreak: ((user as any).longestStreak || 0) as number,
+      todayGameCount: todayRecord?.gameCount || 0,
+      lastStreakDate: lastStreakDate instanceof Date 
+        ? lastStreakDate.toISOString().split('T')[0] 
+        : lastStreakDate || null,
+    };
+  } catch (error) {
+    console.error('Error getting user streak:', error);
     return {
       currentStreak: 0,
       longestStreak: 0,
@@ -157,64 +196,51 @@ export async function getUserStreak(userId: string): Promise<{
       lastStreakDate: null,
     };
   }
-
-  const today = getTodayDate();
-  const todayRecord = await prisma.streakDay.findUnique({
-    where: {
-      userId_date: {
-        userId,
-        date: today,
-      },
-    },
-  });
-
-  return {
-    currentStreak: user.currentStreak || 0,
-    longestStreak: user.longestStreak || 0,
-    todayGameCount: todayRecord?.gameCount || 0,
-    lastStreakDate: user.lastStreakDate?.toISOString().split('T')[0] || null,
-  };
 }
 
 /**
  * Reset streak if needed (call when user hasn't played in 2+ days)
  */
 export async function resetStreakIfNeeded(userId: string): Promise<void> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-  });
-
-  if (!user || user.currentStreak === 0) return;
-
-  const yesterday = getYesterdayDate();
-  const dayBeforeYesterday = getDateNDaysAgo(2);
-
-  const hasGameYesterday = !!(await prisma.streakDay.findUnique({
-    where: {
-      userId_date: {
-        userId,
-        date: yesterday,
-      },
-    },
-  }));
-
-  const hasGameDayBeforeYesterday = !!(await prisma.streakDay.findUnique({
-    where: {
-      userId_date: {
-        userId,
-        date: dayBeforeYesterday,
-      },
-    },
-  }));
-
-  // If no games yesterday or day before, reset streak
-  if (!hasGameYesterday && !hasGameDayBeforeYesterday) {
-    await prisma.user.update({
+  try {
+    const user = await prisma.user.findUnique({
       where: { id: userId },
-      data: {
-        currentStreak: 0,
-        lastStreakDate: null,
-      },
     });
+
+    if (!user || (user as any).currentStreak === 0) return;
+
+    const yesterday = getYesterdayDate();
+    const dayBeforeYesterday = getDateNDaysAgo(2);
+
+    const hasGameYesterday = !!(await prisma.streakDay.findUnique({
+      where: {
+        userId_date: {
+          userId,
+          date: yesterday,
+        },
+      },
+    }));
+
+    const hasGameDayBeforeYesterday = !!(await prisma.streakDay.findUnique({
+      where: {
+        userId_date: {
+          userId,
+          date: dayBeforeYesterday,
+        },
+      },
+    }));
+
+    // If no games yesterday or day before, reset streak
+    if (!hasGameYesterday && !hasGameDayBeforeYesterday) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          currentStreak: 0,
+          lastStreakDate: null,
+        },
+      });
+    }
+  } catch (error) {
+    console.error('Error resetting streak if needed:', error);
   }
 }
