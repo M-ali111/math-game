@@ -2,9 +2,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { ProfileScreen } from './ProfileScreen';
+import { Subject } from '../context/GameContext';
 
 interface GameMenuProps {
-  onSelectSubject: (subject: 'math' | 'logic' | 'english') => void;
+  onSelectSubject: (subject: Subject) => void;
   onSelectNav: (nav: 'stats' | 'leaderboard') => void;
   onLogout: () => void;
 }
@@ -15,7 +16,7 @@ export const GameMenu: React.FC<GameMenuProps> = ({ onSelectSubject, onSelectNav
   const [activeTab, setActiveTab] = useState<'home' | 'profile'>('home');
   const [rank] = useState<number | null>(null);
   const [lastGameSettings, setLastGameSettings] = useState<{
-    subject: 'math' | 'logic' | 'english';
+    subject: Subject;
     grade: number;
     language: 'english' | 'russian' | 'kazakh';
     mode: 'solo';
@@ -53,7 +54,18 @@ export const GameMenu: React.FC<GameMenuProps> = ({ onSelectSubject, onSelectNav
 
   const quickPlayLabel = useMemo(() => {
     if (!lastGameSettings) return '';
-    const subjectLabel = lastGameSettings.subject === 'math' ? 'Math' : lastGameSettings.subject === 'logic' ? 'Logic' : 'English';
+    const subjectLabels: Record<Subject, string> = {
+      math: 'Math',
+      logic: 'Logic',
+      english: 'English',
+      physics: 'Physics',
+      chemistry: 'Chemistry',
+      biology: 'Biology',
+      geography: 'Geography',
+      history: 'History',
+      informatics: 'Informatics',
+    };
+    const subjectLabel = subjectLabels[lastGameSettings.subject];
     const gradeLabel =
       lastGameSettings.grade === 1
         ? 'Primary 1-6'
@@ -230,6 +242,120 @@ export const GameMenu: React.FC<GameMenuProps> = ({ onSelectSubject, onSelectNav
                 <div className="text-4xl mb-2">📚</div>
                 <h2 className="text-2xl font-bold">English</h2>
                 <p className="text-sm font-medium text-amber-100 mt-2">Grammar, Reading & Vocabulary</p>
+              </div>
+              <span className="text-3xl">→</span>
+            </div>
+            <div className="mt-3 grid grid-cols-6 gap-1 opacity-20">
+              {Array.from({ length: 12 }).map((_, idx) => (
+                <span key={idx} className="h-1 bg-white rounded" />
+              ))}
+            </div>
+          </button>
+
+          <button
+            onClick={() => onSelectSubject('physics')}
+            className="w-full bg-gradient-to-br from-indigo-500 to-indigo-600 text-white rounded-2xl py-8 px-5 text-left shadow-md min-h-[148px] hover:shadow-lg hover:scale-105 transition-all duration-200"
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="text-4xl mb-2">⚛️</div>
+                <h2 className="text-2xl font-bold">Physics</h2>
+                <p className="text-sm font-medium text-indigo-100 mt-2">Mechanics, Energy, Forces</p>
+              </div>
+              <span className="text-3xl">→</span>
+            </div>
+            <div className="mt-3 grid grid-cols-6 gap-1 opacity-20">
+              {Array.from({ length: 12 }).map((_, idx) => (
+                <span key={idx} className="h-1 bg-white rounded" />
+              ))}
+            </div>
+          </button>
+
+          <button
+            onClick={() => onSelectSubject('chemistry')}
+            className="w-full bg-gradient-to-br from-green-500 to-green-600 text-white rounded-2xl py-8 px-5 text-left shadow-md min-h-[148px] hover:shadow-lg hover:scale-105 transition-all duration-200"
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="text-4xl mb-2">🧪</div>
+                <h2 className="text-2xl font-bold">Chemistry</h2>
+                <p className="text-sm font-medium text-green-100 mt-2">Elements, Reactions, Compounds</p>
+              </div>
+              <span className="text-3xl">→</span>
+            </div>
+            <div className="mt-3 grid grid-cols-6 gap-1 opacity-20">
+              {Array.from({ length: 12 }).map((_, idx) => (
+                <span key={idx} className="h-1 bg-white rounded" />
+              ))}
+            </div>
+          </button>
+
+          <button
+            onClick={() => onSelectSubject('biology')}
+            className="w-full bg-gradient-to-br from-teal-400 to-teal-500 text-white rounded-2xl py-8 px-5 text-left shadow-md min-h-[148px] hover:shadow-lg hover:scale-105 transition-all duration-200"
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="text-4xl mb-2">🧬</div>
+                <h2 className="text-2xl font-bold">Biology</h2>
+                <p className="text-sm font-medium text-teal-100 mt-2">Life Science, Cells, Organisms</p>
+              </div>
+              <span className="text-3xl">→</span>
+            </div>
+            <div className="mt-3 grid grid-cols-6 gap-1 opacity-20">
+              {Array.from({ length: 12 }).map((_, idx) => (
+                <span key={idx} className="h-1 bg-white rounded" />
+              ))}
+            </div>
+          </button>
+
+          <button
+            onClick={() => onSelectSubject('geography')}
+            className="w-full bg-gradient-to-br from-cyan-500 to-cyan-600 text-white rounded-2xl py-8 px-5 text-left shadow-md min-h-[148px] hover:shadow-lg hover:scale-105 transition-all duration-200"
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="text-4xl mb-2">🌍</div>
+                <h2 className="text-2xl font-bold">Geography</h2>
+                <p className="text-sm font-medium text-cyan-100 mt-2">Earth, Maps, Regions</p>
+              </div>
+              <span className="text-3xl">→</span>
+            </div>
+            <div className="mt-3 grid grid-cols-6 gap-1 opacity-20">
+              {Array.from({ length: 12 }).map((_, idx) => (
+                <span key={idx} className="h-1 bg-white rounded" />
+              ))}
+            </div>
+          </button>
+
+          <button
+            onClick={() => onSelectSubject('history')}
+            className="w-full bg-gradient-to-br from-rose-500 to-rose-600 text-white rounded-2xl py-8 px-5 text-left shadow-md min-h-[148px] hover:shadow-lg hover:scale-105 transition-all duration-200"
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="text-4xl mb-2">📜</div>
+                <h2 className="text-2xl font-bold">History</h2>
+                <p className="text-sm font-medium text-rose-100 mt-2">World & Kazakhstan History</p>
+              </div>
+              <span className="text-3xl">→</span>
+            </div>
+            <div className="mt-3 grid grid-cols-6 gap-1 opacity-20">
+              {Array.from({ length: 12 }).map((_, idx) => (
+                <span key={idx} className="h-1 bg-white rounded" />
+              ))}
+            </div>
+          </button>
+
+          <button
+            onClick={() => onSelectSubject('informatics')}
+            className="w-full bg-gradient-to-br from-slate-500 to-slate-600 text-white rounded-2xl py-8 px-5 text-left shadow-md min-h-[148px] hover:shadow-lg hover:scale-105 transition-all duration-200"
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <div className="text-4xl mb-2">💻</div>
+                <h2 className="text-2xl font-bold">Informatics</h2>
+                <p className="text-sm font-medium text-slate-100 mt-2">Algorithms, Coding, Logic</p>
               </div>
               <span className="text-3xl">→</span>
             </div>

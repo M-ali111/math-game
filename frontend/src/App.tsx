@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from './context/AuthContext';
-import { useGame } from './context/GameContext';
+import { useGame, Subject } from './context/GameContext';
 import { Login } from './components/Login';
 import { GameMenu } from './components/GameMenu';
 import { ModeSelection } from './components/ModeSelection';
@@ -47,7 +47,7 @@ const AppContent: React.FC = () => {
     setAppState('login');
   };
 
-  const handleSelectSubject = (selectedSubject: 'math' | 'logic' | 'english') => {
+  const handleSelectSubject = (selectedSubject: Subject) => {
     setSubject(selectedSubject);
     setAppState('mode-selection');
   };
