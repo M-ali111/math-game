@@ -16,14 +16,6 @@ interface ProfileScreenProps {
   onLogout: () => void;
 }
 
-const getLevel = (totalGames: number) => {
-  if (totalGames <= 10) return 1;
-  if (totalGames <= 25) return 2;
-  if (totalGames <= 50) return 3;
-  if (totalGames <= 100) return 4;
-  return 5;
-};
-
 const getInitials = (username: string) =>
   username
     .split(' ')
@@ -33,8 +25,6 @@ const getInitials = (username: string) =>
     .join('') || 'U';
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({ username, data, onLogout }) => {
-  const level = useMemo(() => getLevel(data.totalGames), [data.totalGames]);
-
   const badges = [
     { icon: '🎯', title: 'First Game', unlocked: data.totalGames >= 1 },
     { icon: '🧠', title: 'Logic Master', unlocked: data.logicAccuracy > 70 },
@@ -57,9 +47,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ username, data, on
           {getInitials(username)}
         </div>
         <h2 className="text-2xl font-bold text-gray-900">{username}</h2>
-        <span className="inline-flex mt-2 px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-sm font-bold">
-          ⭐ Level {level}
-        </span>
       </div>
 
       <div className="bg-white shadow-md rounded-2xl p-4 hover:shadow-lg transition-shadow duration-200">

@@ -69,14 +69,6 @@ export const GameMenu: React.FC<GameMenuProps> = ({ onSelectSubject, onSelectNav
     fetchStreakData();
   }, [request]);
 
-  const levelFromGames = useMemo(() => {
-    if (totalGames <= 10) return 1;
-    if (totalGames <= 25) return 2;
-    if (totalGames <= 50) return 3;
-    if (totalGames <= 100) return 4;
-    return 5;
-  }, [totalGames]);
-
   const quickPlayLabel = useMemo(() => {
     if (!lastGameSettings) return '';
     const subjectLabels: Record<Subject, string> = {
@@ -183,23 +175,6 @@ export const GameMenu: React.FC<GameMenuProps> = ({ onSelectSubject, onSelectNav
       </div>
 
       <div className="px-4 py-6 max-w-md mx-auto pb-24 space-y-4 w-full">
-        <div className="bg-white shadow-md rounded-2xl p-4 hover:shadow-lg transition-shadow duration-200">
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <div>
-              <p className="text-xs text-gray-400">Games</p>
-              <p className="text-lg font-bold text-gray-900">{totalGames}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-400">Win Rate</p>
-              <p className="text-lg font-bold text-gray-900">{winRate}%</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-400">Level</p>
-              <p className="text-lg font-bold text-gray-900">{levelFromGames}</p>
-            </div>
-          </div>
-        </div>
-
         <div className="bg-gradient-to-r from-amber-200 via-yellow-200 to-orange-200 rounded-2xl shadow-md p-6 hover:shadow-lg transition-shadow duration-200">
           <div className="flex items-center justify-between mb-4">
             <span className="text-5xl animate-bounce">🔥</span>
