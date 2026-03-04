@@ -1,5 +1,5 @@
 import React from 'react';
-import { useGame, Subject } from '../context/GameContext';
+import { useGame, Subject, QuestionLanguage } from '../context/GameContext';
 import { useLanguage } from '../context/LanguageContext';
 import { translations } from '../utils/translations';
 
@@ -112,7 +112,7 @@ const TOPICS_BY_SUBJECT: Record<Subject, string[]> = {
 };
 
 export const TopicSelection: React.FC<TopicSelectionProps> = ({ onTopicSelected, onBack }) => {
-  const { subject } = useGame();
+  const { subject, selectedLanguage, setSelectedLanguage } = useGame();
   const { language } = useLanguage();
   const t = translations[language];
 
@@ -121,6 +121,7 @@ export const TopicSelection: React.FC<TopicSelectionProps> = ({ onTopicSelected,
   }
 
   const topics = TOPICS_BY_SUBJECT[subject];
+  const isEnglishSubject = subject === 'english';
 
   const subjectConfig = {
     math: { bg: 'bg-teal-50', border: 'border-teal-500', text: 'text-teal-700', button: 'bg-teal-500 hover:bg-teal-600' },
@@ -156,6 +157,30 @@ export const TopicSelection: React.FC<TopicSelectionProps> = ({ onTopicSelected,
       <div className={`${config.bg} ${config.text} text-center px-4 py-3 text-base sm:text-sm font-semibold`}>
         {subject.charAt(0).toUpperCase() + subject.slice(1)} Topics
       </div>
+
+      {/* Language selector - only for non-English subjects */}
+      {!isEnglishSubject && (
+        <div className="bg-white border-t border-gray-200 px-4 py-4">
+          <div className="max-w-2xl mx-auto">
+            <p className="text-sm font-semibold text-gray-700 mb-3">Question Language:</p>
+            <div className="flex gap-3">
+              {(['english', 'russian', 'kazakh'] as QuestionLanguage[]).map((lang) => (
+                <button
+                  key={lang}
+                  onClick={() => setSelectedLanguage(lang)}
+                  className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all ${
+                    selectedLanguage === lang
+                      ? 'bg-blue-500 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {lang.charAt(0).toUpperCase() + lang.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main content */}
       <div className="flex-1 px-4 py-6 max-w-2xl mx-auto w-full overflow-y-auto pb-20">

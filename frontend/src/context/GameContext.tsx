@@ -3,6 +3,7 @@ import React, { createContext, useContext, useMemo, useState, useCallback, React
 export type Subject = 'math' | 'logic' | 'english' | 'physics' | 'chemistry' | 'biology' | 'geography' | 'history' | 'informatics';
 export type GameMode = 'solo' | 'multiplayer';
 export type GameFlowStep = 'subject' | 'mode' | 'topic' | 'language' | 'playing';
+export type QuestionLanguage = 'english' | 'russian' | 'kazakh';
 
 interface GameContextType {
   subject: Subject | null;
@@ -11,6 +12,8 @@ interface GameContextType {
   setSelectedMode: (mode: GameMode) => void;
   selectedTopic: string | null;
   setSelectedTopic: (topic: string) => void;
+  selectedLanguage: QuestionLanguage;
+  setSelectedLanguage: (language: QuestionLanguage) => void;
   currentStep: GameFlowStep;
   setCurrentStep: (step: GameFlowStep) => void;
   resetGameFlow: () => void;
@@ -19,6 +22,7 @@ interface GameContextType {
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
 const SUBJECT_STORAGE_KEY = 'selectedSubject';
+const LANGUAGE_STORAGE_KEY = 'selectedLanguage';
 
 export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [subject, setSubjectState] = useState<Subject | null>(() => {
@@ -28,6 +32,11 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   });
   const [selectedMode, setSelectedMode] = useState<GameMode | null>(null);
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+  const [selectedLanguage, setSelectedLanguageState] = useState<QuestionLanguage>(() => {
+    const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY) as QuestionLanguage | null;
+    const validLanguages = ['english', 'russian', 'kazakh'];
+    return stored && validLanguages.includes(stored) ? stored : 'english';
+  });
   const [currentStep, setCurrentStep] = useState<GameFlowStep>('subject');
 
   console.log('[GameProvider] Mounted - subject:', subject);
@@ -35,6 +44,11 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const setSubject = useCallback((next: Subject) => {
     setSubjectState(next);
     localStorage.setItem(SUBJECT_STORAGE_KEY, next);
+  }, []);
+
+  const setSelectedLanguage = useCallback((language: QuestionLanguage) => {
+    setSelectedLanguageState(language);
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
   }, []);
 
   const resetGameFlow = useCallback(() => {
@@ -51,11 +65,13 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setSelectedMode,
       selectedTopic,
       setSelectedTopic,
+      selectedLanguage,
+      setSelectedLanguage,
       currentStep,
       setCurrentStep,
       resetGameFlow,
     }),
-    [subject, setSubject, selectedMode, selectedTopic, currentStep, resetGameFlow]
+    [subject, setSubject, selectedMode, selectedTopic, selectedLanguage, setSelectedLanguage, currentStep, resetGameFlow]
   );
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

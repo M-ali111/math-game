@@ -38,7 +38,7 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
   const [animatedXp, setAnimatedXp] = useState(0);
   const { request } = useApi();
   const { language } = useLanguage();
-  const { subject, selectedTopic } = useGame();
+  const { subject, selectedTopic, selectedLanguage } = useGame();
   const t = translations[language];
 
   useEffect(() => {
@@ -108,7 +108,7 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
     try {
       const data = await request('/games/solo/start', {
         method: 'POST',
-        body: JSON.stringify({ topic, language, subject: gameSubject }),
+        body: JSON.stringify({ topic, language: selectedLanguage, subject: gameSubject }),
       });
       setGameId(data.gameId);
       setQuestions(data.questions);
