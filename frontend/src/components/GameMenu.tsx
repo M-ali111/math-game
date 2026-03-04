@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useApi } from '../utils/api';
 import { ProfileScreen } from './ProfileScreen';
 import { Subject } from '../context/GameContext';
 
@@ -10,11 +11,25 @@ interface GameMenuProps {
   onLogout: () => void;
 }
 
+interface StreakData {
+  currentStreak: number;
+  longestStreak: number;
+  todayGameCount: number;
+  lastStreakDate: string | null;
+}
+
 export const GameMenu: React.FC<GameMenuProps> = ({ onSelectSubject, onSelectNav, onLogout }) => {
   const { user } = useAuth();
   const { setLanguage } = useLanguage();
+  const { request } = useApi();
   const [activeTab, setActiveTab] = useState<'home' | 'profile'>('home');
   const [rank] = useState<number | null>(null);
+  const [streakData, setStreakData] = useState<StreakData>({
+    currentStreak: 0,
+    longestStreak: 0,
+    todayGameCount: 0,
+    lastStreakDate: null,
+  });
   const [lastGameSettings, setLastGameSettings] = useState<{
     subject: Subject;
     grade: number;
@@ -25,8 +40,6 @@ export const GameMenu: React.FC<GameMenuProps> = ({ onSelectSubject, onSelectNav
   const totalGames = (user as any)?.totalGamesPlayed || 0;
   const totalWins = (user as any)?.totalWins || 0;
   const winRate = totalGames > 0 ? Math.round((totalWins / totalGames) * 100) : 0;
-  const currentStreak = Number(localStorage.getItem('zirekIqCurrentStreak') || 0);
-  const longestStreak = Number(localStorage.getItem('zirekIqBestStreak') || currentStreak || 0);
   const mathAccuracy = Number(localStorage.getItem('zirekIqMathAccuracy') || 0);
   const logicAccuracy = Number(localStorage.getItem('zirekIqLogicAccuracy') || 0);
 
@@ -42,7 +55,19 @@ export const GameMenu: React.FC<GameMenuProps> = ({ onSelectSubject, onSelectNav
         setLastGameSettings(null);
       }
     }
-  }, []);
+
+    // Fetch streak data from API
+    const fetchStreakData = async () => {
+      try {
+        const data = await request('/stats/streak');
+        setStreakData(data);
+      } catch (error) {
+        console.error('Failed to fetch streak data:', error);
+      }
+    };
+
+    fetchStreakData();
+  }, [request]);
 
   const levelFromGames = useMemo(() => {
     if (totalGames <= 10) return 1;
@@ -175,14 +200,28 @@ export const GameMenu: React.FC<GameMenuProps> = ({ onSelectSubject, onSelectNav
           </div>
         </div>
 
-        <div className="bg-gradient-to-r from-amber-200 via-yellow-200 to-orange-200 rounded-2xl shadow-md p-4 hover:shadow-lg transition-shadow duration-200">
-          <p className="font-bold text-gray-900">🎯 Today's Goal</p>
-          <p className="text-sm font-medium text-gray-700 mt-1">Complete 3 games to maintain your streak</p>
-          <div className="flex gap-2 mt-3">
-            <span className="w-3 h-3 rounded-full bg-white/90" />
-            <span className="w-3 h-3 rounded-full bg-white/70" />
-            <span className="w-3 h-3 rounded-full bg-white/50" />
+        <div className="bg-gradient-to-r from-amber-200 via-yellow-200 to-orange-200 rounded-2xl shadow-md p-6 hover:shadow-lg transition-shadow duration-200">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-5xl animate-bounce">🔥</span>
+            <span className="text-6xl font-bold text-orange-600">{streakData.currentStreak}</span>
           </div>
+          <p className="font-bold text-gray-900 mb-2">Today's Goal</p>
+          <p className="text-sm font-medium text-gray-700 mb-3">
+            Complete 3 games to maintain your streak
+          </p>
+          <div className="flex gap-1">
+            {[...Array(3)].map((_, i) => (
+              <div
+                key={i}
+                className={`flex-1 h-2 rounded-full transition-all ${
+                  i < streakData.todayGameCount ? 'bg-yellow-400' : 'bg-white/50'
+                }`}
+              />
+            ))}
+          </div>
+          <p className="text-xs text-gray-600 mt-3 font-semibold">
+            {streakData.todayGameCount}/3 games today • Longest: {streakData.longestStreak}
+          </p>
         </div>
 
         {lastGameSettings && (

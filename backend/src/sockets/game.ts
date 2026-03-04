@@ -1,6 +1,7 @@
 import { Server, Socket } from 'socket.io';
 import { gameService } from '../services/game';
 import { questionService } from '../services/question';
+import { recordGameForDay } from '../services/streak';
 import { PrismaClient } from '@prisma/client';
 import { verifyToken } from '../utils/jwt';
 import { QuestionLanguage, QuestionSubject } from '../services/aiQuestion';
@@ -470,6 +471,10 @@ export const setupSocket = (io: Server) => {
               questionWinners,
             });
 
+            // Record games for streak tracking
+            await recordGameForDay(winnerPlayer.userId);
+            await recordGameForDay(loserPlayer.userId);
+
             // Update both players' status back to available
             for (const [socketId, userInfo] of onlineUsers.entries()) {
               if (userInfo.userId === winnerPlayer.userId || userInfo.userId === loserPlayer.userId) {
@@ -604,6 +609,10 @@ export const setupSocket = (io: Server) => {
             loserScore: loser.score,
             questionWinners: questionWinners,
           });
+
+          // Record games for streak tracking
+          await recordGameForDay(winner.userId);
+          await recordGameForDay(loser.userId);
 
           // Update both players' status back to available
           for (const [socketId, userInfo] of onlineUsers.entries()) {

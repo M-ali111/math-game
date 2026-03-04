@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { calculateNextDifficulty } from '../utils/difficulty';
 import { questionService } from './question';
 import { generateNisBilQuestions, NisBilDifficulty, NisBilQuestion, QuestionLanguage, QuestionSubject } from './aiQuestion';
+import { recordGameForDay, updateStreakStatus } from './streak';
 
 const prisma = new PrismaClient();
 
@@ -290,6 +291,9 @@ export const gameService = {
           bestScore: Math.max(user.bestScore, Math.round(score)),
         },
       });
+
+      // Record game for streak tracking
+      await recordGameForDay(userId);
     }
 
     return {
