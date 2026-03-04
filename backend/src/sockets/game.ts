@@ -16,8 +16,8 @@ const buildOnlineUsersList = (excludeUserId?: string) => {
     if (excludeUserId && info.userId === excludeUserId) {
       continue;
     }
-    // Only include available users in the list
-    if (info.status === 'available' && !uniqueUsers.has(info.userId)) {
+    // Include all users with their status
+    if (!uniqueUsers.has(info.userId)) {
       uniqueUsers.set(info.userId, { userId: info.userId, username: info.username, status: info.status });
     }
   }

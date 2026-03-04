@@ -23,6 +23,7 @@ interface MultiplayerGameProps {
 interface OnlineUser {
   userId: string;
   username: string;
+  status?: 'available' | 'in-game';
 }
 
 interface IncomingRequest {
@@ -519,22 +520,27 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
               <div className="w-full space-y-3 mb-8">
                 {onlineUsers.map((user) => (
                   <div key={user.userId} className="bg-white rounded-2xl shadow-md p-4 sm:p-5 flex justify-between items-center">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-1">
                       <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 to-cyan-500 rounded-full flex items-center justify-center text-white font-bold text-xl">
                         👤
                       </div>
-                      <span className="font-semibold text-gray-900 text-base">{user.username}</span>
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-gray-900 text-base">{user.username}</span>
+                        {user.status === 'in-game' && (
+                          <span className="text-xs text-orange-600 font-medium">In a match</span>
+                        )}
+                      </div>
                     </div>
                     <button
                       onClick={() => handleSendRequest(user.userId)}
-                      disabled={outgoingRequestTo === user.userId}
+                      disabled={outgoingRequestTo === user.userId || user.status === 'in-game'}
                       className={`px-4 sm:px-6 py-3 rounded-full font-bold text-base transition-colors min-h-[48px] ${
-                        outgoingRequestTo === user.userId
+                        outgoingRequestTo === user.userId || user.status === 'in-game'
                           ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
                           : 'bg-cyan-500 hover:bg-cyan-600 active:bg-cyan-700 text-white'
                       }`}
                     >
-                      {outgoingRequestTo === user.userId ? 'Requesting...' : 'Play'}
+                      {outgoingRequestTo === user.userId ? 'Requesting...' : user.status === 'in-game' ? 'Busy' : 'Play'}
                     </button>
                   </div>
                 ))}
