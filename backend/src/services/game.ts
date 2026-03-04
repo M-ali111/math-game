@@ -477,8 +477,33 @@ export const gameService = {
    * Get leaderboard
    */
   async getLeaderboard(limit: number = 100) {
-    // Get all users
-    const allUsers = await prisma.user.findMany({
+    // Get all users who have played at least one multiplayer game
+    const usersWithMultiplayerGames = await prisma.gamePlayer.findMany({
+      where: {
+        game: {
+          gameType: 'multiplayer',
+          status: 'completed'
+        }
+      },
+      select: {
+        userId: true,
+      },
+      distinct: ['userId'],
+    });
+
+    const userIds = usersWithMultiplayerGames.map(gp => gp.userId);
+
+    if (userIds.length === 0) {
+      return [];
+    }
+
+    // Get user details
+    const users = await prisma.user.findMany({
+      where: {
+        id: {
+          in: userIds
+        }
+      },
       select: {
         id: true,
         username: true,
@@ -487,7 +512,7 @@ export const gameService = {
 
     // Calculate multiplayer wins and games for each user
     const leaderboardData = await Promise.all(
-      allUsers.map(async (user) => {
+      users.map(async (user) => {
         // Get all multiplayer games where this user participated
         const multiplayerGames = await prisma.gamePlayer.findMany({
           where: {
