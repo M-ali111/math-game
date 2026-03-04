@@ -275,15 +275,6 @@ export const GameMenu: React.FC<GameMenuProps> = ({ onSelectSubject, onSelectNav
             <h2 className="text-base font-bold leading-tight">Informatics</h2>
             <p className="text-xs font-medium text-slate-100 mt-1.5">Algorithms & Coding</p>
           </button>
-
-          <button
-            onClick={() => onSelectNav('stats')}
-            className="col-span-2 bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-2xl py-5 px-4 text-left shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200"
-          >
-            <div className="text-3xl mb-2">📊</div>
-            <h2 className="text-base font-bold leading-tight">Stats & Leaderboard</h2>
-            <p className="text-xs font-medium text-indigo-100 mt-1.5">View your progress</p>
-          </button>
         </div>
       </div>
 
