@@ -20,10 +20,11 @@ function parseLanguage(value: unknown): 'english' | 'russian' | 'kazakh' {
   throw new Error('Invalid language option.');
 }
 
-function parseSubject(value: unknown): 'math' | 'logic' | 'english' {
+function parseSubject(value: unknown): 'math' | 'logic' | 'english' | 'physics' | 'chemistry' | 'biology' | 'geography' | 'history' | 'informatics' {
   if (!value) return 'math';
-  if (value === 'math' || value === 'logic' || value === 'english') {
-    return value;
+  const validSubjects = ['math', 'logic', 'english', 'physics', 'chemistry', 'biology', 'geography', 'history', 'informatics'];
+  if (validSubjects.includes(value as string)) {
+    return value as any;
   }
   throw new Error('Invalid subject option.');
 }

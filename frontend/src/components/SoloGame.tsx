@@ -404,12 +404,36 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
         {currentQuestion && (
           <>
             <div className={`bg-white rounded-2xl shadow-md p-5 text-center border-t-4 ${
-              currentQuestion.subject === 'logic' ? 'border-purple-500' : 'border-teal-500'
+              currentQuestion.subject === 'math' ? 'border-teal-500' :
+              currentQuestion.subject === 'logic' ? 'border-purple-500' :
+              currentQuestion.subject === 'english' ? 'border-amber-500' :
+              currentQuestion.subject === 'physics' ? 'border-indigo-500' :
+              currentQuestion.subject === 'chemistry' ? 'border-green-500' :
+              currentQuestion.subject === 'biology' ? 'border-teal-500' :
+              currentQuestion.subject === 'geography' ? 'border-cyan-500' :
+              currentQuestion.subject === 'history' ? 'border-rose-500' :
+              currentQuestion.subject === 'informatics' ? 'border-slate-500' : 'border-gray-500'
             }`}>
               <span className={`inline-flex px-3 py-1 rounded-full text-sm text-white font-bold mb-4 ${
-                currentQuestion.subject === 'logic' ? 'bg-purple-500' : 'bg-teal-500'
+                currentQuestion.subject === 'math' ? 'bg-teal-500' :
+                currentQuestion.subject === 'logic' ? 'bg-purple-500' :
+                currentQuestion.subject === 'english' ? 'bg-amber-500' :
+                currentQuestion.subject === 'physics' ? 'bg-indigo-500' :
+                currentQuestion.subject === 'chemistry' ? 'bg-green-500' :
+                currentQuestion.subject === 'biology' ? 'bg-teal-500' :
+                currentQuestion.subject === 'geography' ? 'bg-cyan-500' :
+                currentQuestion.subject === 'history' ? 'bg-rose-500' :
+                currentQuestion.subject === 'informatics' ? 'bg-slate-500' : 'bg-gray-500'
               }`}>
-                {currentQuestion.subject === 'logic' ? '🧠 Logic' : '🔢 Math'}
+                {currentQuestion.subject === 'math' ? '🔢 Math' :
+                 currentQuestion.subject === 'logic' ? '🧠 Logic' :
+                 currentQuestion.subject === 'english' ? '📚 English' :
+                 currentQuestion.subject === 'physics' ? '⚛️ Physics' :
+                 currentQuestion.subject === 'chemistry' ? '🧪 Chemistry' :
+                 currentQuestion.subject === 'biology' ? '🧬 Biology' :
+                 currentQuestion.subject === 'geography' ? '🌍 Geography' :
+                 currentQuestion.subject === 'history' ? '📜 History' :
+                 currentQuestion.subject === 'informatics' ? '💻 Informatics' : '📚 Subject'}
               </span>
               <h2 className="text-xl font-semibold text-gray-900 min-h-[150px] flex items-center justify-center leading-relaxed">
                 {currentQuestion.text}
