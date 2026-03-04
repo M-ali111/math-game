@@ -160,6 +160,8 @@ export async function getUserStreak(userId: string): Promise<{
   lastStreakDate: string | null;
 }> {
   try {
+    await updateStreakStatus(userId);
+
     const user = await prisma.user.findUnique({
       where: { id: userId },
     });
