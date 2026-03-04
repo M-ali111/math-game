@@ -108,7 +108,11 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
     try {
       const data = await request('/games/solo/start', {
         method: 'POST',
-        body: JSON.stringify({ topic, language: selectedLanguage, subject: gameSubject }),
+        body: JSON.stringify({ 
+          topic, 
+          language: subject === 'english' ? 'english' : selectedLanguage, 
+          subject: gameSubject 
+        }),
       });
       setGameId(data.gameId);
       setQuestions(data.questions);

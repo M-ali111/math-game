@@ -238,7 +238,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
     try {
       const data = await request('/games/multiplayer/create', {
         method: 'POST',
-        body: JSON.stringify({ topic, language: selectedLanguage, subject }),
+        body: JSON.stringify({ topic, language: subject === 'english' ? 'english' : selectedLanguage, subject }),
       });
       setGameId(data.gameId);
       setMode('waiting');
@@ -271,7 +271,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
     try {
       const data = await request(`/games/multiplayer/${joinGameId}/join`, {
         method: 'POST',
-        body: JSON.stringify({ topic: selectedTopic, language: selectedLanguage, subject }),
+        body: JSON.stringify({ topic: selectedTopic, language: subject === 'english' ? 'english' : selectedLanguage, subject }),
       });
       setGameId(joinGameId);
       setMode('waiting');
@@ -325,7 +325,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
       return;
     }
     setOutgoingRequestTo(userId);
-    socket.emit('send_game_request', { toUserId: userId, topic: selectedTopic, subject, language: selectedLanguage });
+    socket.emit('send_game_request', { toUserId: userId, topic: selectedTopic, subject, language: subject === 'english' ? 'english' : selectedLanguage });
   };
 
   const handleAcceptRequest = () => {
@@ -334,7 +334,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
       fromUserId: incomingRequest.fromUserId,
       topic: incomingRequest.topic,
       subject: incomingRequest.subject,
-      language: incomingRequest.language || selectedLanguage,
+      language: incomingRequest.subject === 'english' ? 'english' : (incomingRequest.language || selectedLanguage),
     });
   };
 
