@@ -34,7 +34,7 @@ model User {
 model StreakDay {
   id        String   @id @default(cuid())
   userId    String
-  date      String   @unique                      // YYYY-MM-DD format
+  date      String                              // YYYY-MM-DD format
   gameCount Int      @default(0)                  // how many games played that day
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
