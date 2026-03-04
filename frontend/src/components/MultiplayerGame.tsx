@@ -4,7 +4,7 @@ import { useGameSocket } from '../hooks/useGameSocket';
 import { TopicSelection } from './TopicSelection';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { useGame } from '../context/GameContext';
+import { useGame, Subject } from '../context/GameContext';
 import { translations } from '../utils/translations';
 
 interface Question {
@@ -29,6 +29,7 @@ interface IncomingRequest {
   fromUserId: string;
   fromUsername: string;
   topic: string;
+  subject: Subject;
   language?: 'english' | 'russian' | 'kazakh';
 }
 
@@ -324,7 +325,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
       return;
     }
     setOutgoingRequestTo(userId);
-    socket.emit('send_game_request', { toUserId: userId, topic: selectedTopic, language });
+    socket.emit('send_game_request', { toUserId: userId, topic: selectedTopic, subject, language });
   };
 
   const handleAcceptRequest = () => {
@@ -332,6 +333,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
     socket.emit('accept_game_request', {
       fromUserId: incomingRequest.fromUserId,
       topic: incomingRequest.topic,
+      subject: incomingRequest.subject,
       language: incomingRequest.language || language,
     });
   };

@@ -3,7 +3,7 @@ import { gameService } from '../services/game';
 import { questionService } from '../services/question';
 import { PrismaClient } from '@prisma/client';
 import { verifyToken } from '../utils/jwt';
-import { QuestionLanguage } from '../services/aiQuestion';
+import { QuestionLanguage, QuestionSubject } from '../services/aiQuestion';
 
 const prisma = new PrismaClient();
 const gameAnswers = new Map<string, Map<string, boolean>>();
@@ -158,7 +158,7 @@ export const setupSocket = (io: Server) => {
       }
     });
 
-    socket.on('send_game_request', (data: { toUserId: string; topic: string; language?: QuestionLanguage }) => {
+    socket.on('send_game_request', (data: { toUserId: string; topic: string; subject: QuestionSubject; language?: QuestionLanguage }) => {
       try {
         const fromUserId = socket.data.userId as string | undefined;
         if (!fromUserId) {
@@ -177,6 +177,7 @@ export const setupSocket = (io: Server) => {
           fromUserId,
           fromUsername: fromUser?.username || 'Player',
           topic: data.topic,
+          subject: data.subject,
           language: data.language ?? 'english',
         });
       } catch (error: any) {
@@ -184,7 +185,7 @@ export const setupSocket = (io: Server) => {
       }
     });
 
-    socket.on('accept_game_request', async (data: { fromUserId: string; topic: string; language?: QuestionLanguage }) => {
+    socket.on('accept_game_request', async (data: { fromUserId: string; topic: string; subject: QuestionSubject; language?: QuestionLanguage }) => {
       try {
         const acceptUserId = socket.data.userId as string | undefined;
         if (!acceptUserId) {
@@ -199,8 +200,8 @@ export const setupSocket = (io: Server) => {
         }
 
         const language = data.language ?? 'english';
-        const gameData = await gameService.createMultiplayerGame(data.fromUserId, data.topic, language);
-        await gameService.joinMultiplayerGame(gameData.gameId, acceptUserId, data.topic, language);
+        const gameData = await gameService.createMultiplayerGame(data.fromUserId, data.topic, language, data.subject);
+        await gameService.joinMultiplayerGame(gameData.gameId, acceptUserId, data.topic, language, data.subject);
 
         const senderInfo = onlineUsers.get(senderSocketId);
         const acceptInfo = onlineUsers.get(socket.id);
