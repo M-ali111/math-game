@@ -38,25 +38,14 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
   const [animatedXp, setAnimatedXp] = useState(0);
   const { request } = useApi();
   const { language } = useLanguage();
-  const { subject, selectedGrade } = useGame();
+  const { subject, selectedTopic } = useGame();
   const t = translations[language];
 
-  const gradeLabel = selectedGrade === 1
-    ? 'Primary (Grades 1-6)'
-    : selectedGrade === 2
-      ? 'Grade 5 -> 6 NIS/BIL Entry'
-      : selectedGrade === 3
-        ? 'Grade 6 -> 7 NIS/BIL Entry'
-        : '';
-
   useEffect(() => {
-    if (selectedGrade !== null && subject !== null) {
-      startGame(selectedGrade, subject);
-    } else if (subject === 'logic' && selectedGrade === null) {
-      // For logic, auto-start with grade 0 (general level)
-      startGame(0, 'logic');
+    if (selectedTopic !== null && subject !== null) {
+      startGame(subject, selectedTopic);
     }
-  }, [selectedGrade, subject!, gradeLabel]);
+  }, [selectedTopic, subject]);
 
   useEffect(() => {
     if (!gameStarted || gameCompleted) return;
@@ -103,7 +92,7 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
     return circumference - (visualTimeLeft / 30) * circumference;
   }, [visualTimeLeft]);
 
-  const startGame = async (grade: number, gameSubject: Subject) => {
+  const startGame = async (gameSubject: Subject, topic: string) => {
     setLoading(true);
     setWrongReviews([]);
     setReviewOpen(false);
@@ -112,7 +101,6 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
     setSelectedAnswer(null);
     setAnswerExplanation(null);
     setAwaitingNext(false);
-    // selectedGrade comes from GameContext, not local state
     setAnswerResult('idle');
     setRevealedCorrectAnswer(null);
     setGameCompleted(false);
@@ -120,7 +108,7 @@ export const SoloGame: React.FC<SoloGameProps> = ({ onBack }) => {
     try {
       const data = await request('/games/solo/start', {
         method: 'POST',
-        body: JSON.stringify({ grade, language, subject: gameSubject }),
+        body: JSON.stringify({ topic, language, subject: gameSubject }),
       });
       setGameId(data.gameId);
       setQuestions(data.questions);

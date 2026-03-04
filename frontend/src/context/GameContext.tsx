@@ -2,16 +2,15 @@ import React, { createContext, useContext, useMemo, useState, useCallback, React
 
 export type Subject = 'math' | 'logic' | 'english' | 'physics' | 'chemistry' | 'biology' | 'geography' | 'history' | 'informatics';
 export type GameMode = 'solo' | 'multiplayer';
-export type Grade = 0 | 1 | 2 | 3;
-export type GameFlowStep = 'subject' | 'mode' | 'grade' | 'language' | 'playing';
+export type GameFlowStep = 'subject' | 'mode' | 'topic' | 'language' | 'playing';
 
 interface GameContextType {
   subject: Subject | null;
   setSubject: (subject: Subject) => void;
   selectedMode: GameMode | null;
   setSelectedMode: (mode: GameMode) => void;
-  selectedGrade: Grade | null;
-  setSelectedGrade: (grade: Grade) => void;
+  selectedTopic: string | null;
+  setSelectedTopic: (topic: string) => void;
   currentStep: GameFlowStep;
   setCurrentStep: (step: GameFlowStep) => void;
   resetGameFlow: () => void;
@@ -28,7 +27,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return stored && validSubjects.includes(stored) ? stored : null;
   });
   const [selectedMode, setSelectedMode] = useState<GameMode | null>(null);
-  const [selectedGrade, setSelectedGrade] = useState<Grade | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<GameFlowStep>('subject');
 
   console.log('[GameProvider] Mounted - subject:', subject);
@@ -40,7 +39,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const resetGameFlow = useCallback(() => {
     setSelectedMode(null);
-    setSelectedGrade(null);
+    setSelectedTopic(null);
     setCurrentStep('subject');
   }, []);
 
@@ -50,13 +49,13 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setSubject,
       selectedMode,
       setSelectedMode,
-      selectedGrade,
-      setSelectedGrade,
+      selectedTopic,
+      setSelectedTopic,
       currentStep,
       setCurrentStep,
       resetGameFlow,
     }),
-    [subject, setSubject, selectedMode, selectedGrade, currentStep, resetGameFlow]
+    [subject, setSubject, selectedMode, selectedTopic, currentStep, resetGameFlow]
   );
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

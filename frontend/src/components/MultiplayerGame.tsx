@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApi } from '../utils/api';
 import { useGameSocket } from '../hooks/useGameSocket';
-import { GradeSelector } from './GradeSelector';
+import { TopicSelection } from './TopicSelection';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useGame } from '../context/GameContext';
@@ -28,11 +28,11 @@ interface OnlineUser {
 interface IncomingRequest {
   fromUserId: string;
   fromUsername: string;
-  grade: number;
+  topic: string;
   language?: 'english' | 'russian' | 'kazakh';
 }
 
-type GameMode = 'selection' | 'grade' | 'join' | 'random' | 'waiting' | 'playing' | 'completed';
+type GameMode = 'selection' | 'topic' | 'join' | 'random' | 'waiting' | 'playing' | 'completed';
 type PendingAction = 'create' | 'join' | 'random' | null;
 
 export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
@@ -47,7 +47,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [gameResult, setGameResult] = useState<any>(null);
   const [timeStarted, setTimeStarted] = useState<number>(0);
-  const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
   const [answerExplanation, setAnswerExplanation] = useState<string | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
@@ -68,14 +68,6 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
   useEffect(() => {
     console.log('Frontend gameId:', gameId);
   }, [gameId]);
-
-  const gradeLabel = selectedGrade === 1
-    ? 'Primary (Grades 1-6)'
-    : selectedGrade === 2
-      ? 'Grade 5 -> 6 NIS/BIL Entry'
-      : selectedGrade === 3
-        ? 'Grade 6 -> 7 NIS/BIL Entry'
-        : '';
 
   // Separate effect for socket event listeners - should only depend on socket, not game state
   useEffect(() => {
@@ -151,7 +143,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
 
     socket.on('game_request_accepted', (data) => {
       setGameId(data.gameId);
-      setSelectedGrade(data.grade);
+      setSelectedTopic(data.topic);
       setMode('waiting');
       setIncomingRequest(null);
       setOutgoingRequestTo(null);
@@ -234,7 +226,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
     return () => clearInterval(timer);
   }, [mode, currentIndex]);
 
-  const createGame = async (grade: number) => {
+  const createGame = async (topic: string) => {
     setOpponentLeft(false);
     setGameStarted(false);
     if (!subject) {
@@ -245,7 +237,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
     try {
       const data = await request('/games/multiplayer/create', {
         method: 'POST',
-        body: JSON.stringify({ grade, language, subject }),
+        body: JSON.stringify({ topic, language, subject }),
       });
       setGameId(data.gameId);
       setMode('waiting');
@@ -269,8 +261,8 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
       return;
     }
 
-    if (selectedGrade === null || subject === null) {
-      alert('Please select a grade and subject first');
+    if (selectedTopic === null || subject === null) {
+      alert('Please select a topic and subject first');
       return;
     }
 
@@ -278,7 +270,7 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
     try {
       const data = await request(`/games/multiplayer/${joinGameId}/join`, {
         method: 'POST',
-        body: JSON.stringify({ grade: selectedGrade, language, subject }),
+        body: JSON.stringify({ topic: selectedTopic, language, subject }),
       });
       setGameId(joinGameId);
       setMode('waiting');
@@ -327,19 +319,19 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
 
   const handleSendRequest = (userId: string) => {
     if (!socket) return;
-    if (selectedGrade === null) {
-      alert('Please select a grade first');
+    if (selectedTopic === null) {
+      alert('Please select a topic first');
       return;
     }
     setOutgoingRequestTo(userId);
-    socket.emit('send_game_request', { toUserId: userId, grade: selectedGrade, language });
+    socket.emit('send_game_request', { toUserId: userId, topic: selectedTopic, language });
   };
 
   const handleAcceptRequest = () => {
     if (!socket || !incomingRequest) return;
     socket.emit('accept_game_request', {
       fromUserId: incomingRequest.fromUserId,
-      grade: incomingRequest.grade,
+      topic: incomingRequest.topic,
       language: incomingRequest.language || language,
     });
   };
@@ -353,21 +345,8 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
   const handleSelectGameAction = (action: PendingAction) => {
     setOpponentLeft(false);
     setGameStarted(false);
-    if (subject === 'logic') {
-      // For logic, skip grade selection and use grade 0
-      setSelectedGrade(0 as unknown as 1);
-      if (action === 'create') {
-        createGame(0);
-      } else if (action === 'random') {
-        setMode('random');
-      } else {
-        setMode('join');
-      }
-    } else {
-      // For math, show grade selection screen
-      setPendingAction(action);
-      setMode('grade');
-    }
+    setPendingAction(action);
+    setMode('topic');
   };
 
   const handleQuit = () => {
@@ -393,8 +372,8 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
           wants to play with you!
         </p>
         <div className="bg-cyan-50 rounded-xl p-4 mb-6 text-center">
-          <p className="text-base sm:text-sm text-gray-600">Grade</p>
-          <p className="text-xl sm:text-2xl font-bold text-cyan-600">{incomingRequest.grade}</p>
+          <p className="text-base sm:text-sm text-gray-600">Topic</p>
+          <p className="text-xl sm:text-2xl font-bold text-cyan-600">{incomingRequest.topic}</p>
         </div>
         <div className="flex gap-3">
           <button 
@@ -481,15 +460,14 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
     );
   }
 
-  if (mode === 'grade') {
+  if (mode === 'topic') {
     return (
       <>
-        <GradeSelector
-          title={t.chooseGrade}
-          onSelect={(grade) => {
-            setSelectedGrade(grade);
+        <TopicSelection
+          onSelect={(topic) => {
+            setSelectedTopic(topic);
             if (pendingAction === 'create') {
-              createGame(grade);
+              createGame(topic);
             } else if (pendingAction === 'random') {
               setMode('random');
             } else {
@@ -633,10 +611,10 @@ export const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onBack }) => {
               </div>
             </div>
 
-            {selectedGrade !== null && (
+            {selectedTopic !== null && (
               <div className="mb-6 p-4 bg-cyan-50 rounded-xl">
-                <p className="text-base sm:text-sm text-gray-600 mb-1">Grade</p>
-                <p className="text-xl sm:text-2xl font-bold text-cyan-600">{gradeLabel || selectedGrade}</p>
+                <p className="text-base sm:text-sm text-gray-600 mb-1">Topic</p>
+                <p className="text-xl sm:text-2xl font-bold text-cyan-600">{selectedTopic}</p>
               </div>
             )}
 

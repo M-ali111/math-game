@@ -158,7 +158,7 @@ export const setupSocket = (io: Server) => {
       }
     });
 
-    socket.on('send_game_request', (data: { toUserId: string; grade: number; language?: QuestionLanguage }) => {
+    socket.on('send_game_request', (data: { toUserId: string; topic: string; language?: QuestionLanguage }) => {
       try {
         const fromUserId = socket.data.userId as string | undefined;
         if (!fromUserId) {
@@ -176,7 +176,7 @@ export const setupSocket = (io: Server) => {
         io.to(targetSocketId).emit('game_request_received', {
           fromUserId,
           fromUsername: fromUser?.username || 'Player',
-          grade: data.grade,
+          topic: data.topic,
           language: data.language ?? 'english',
         });
       } catch (error: any) {
@@ -184,7 +184,7 @@ export const setupSocket = (io: Server) => {
       }
     });
 
-    socket.on('accept_game_request', async (data: { fromUserId: string; grade: number; language?: QuestionLanguage }) => {
+    socket.on('accept_game_request', async (data: { fromUserId: string; topic: string; language?: QuestionLanguage }) => {
       try {
         const acceptUserId = socket.data.userId as string | undefined;
         if (!acceptUserId) {
@@ -199,8 +199,8 @@ export const setupSocket = (io: Server) => {
         }
 
         const language = data.language ?? 'english';
-        const gameData = await gameService.createMultiplayerGame(data.fromUserId, data.grade, language);
-        await gameService.joinMultiplayerGame(gameData.gameId, acceptUserId, data.grade, language);
+        const gameData = await gameService.createMultiplayerGame(data.fromUserId, data.topic, language);
+        await gameService.joinMultiplayerGame(gameData.gameId, acceptUserId, data.topic, language);
 
         const senderInfo = onlineUsers.get(senderSocketId);
         const acceptInfo = onlineUsers.get(socket.id);
@@ -212,7 +212,7 @@ export const setupSocket = (io: Server) => {
 
         io.to([senderSocketId, socket.id]).emit('game_request_accepted', {
           gameId: gameData.gameId,
-          grade: data.grade,
+          topic: data.topic,
           language,
           players: [
             { userId: data.fromUserId, username: senderInfo?.username || 'Player' },

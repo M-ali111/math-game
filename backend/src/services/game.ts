@@ -59,108 +59,6 @@ function buildAnswerOptions(answer: number, grade: number): string[] {
   return allOptions.map((value) => formatOption(value, grade));
 }
 
-const GRADE_LABELS: Record<number, string> = {
-  0: 'general (all levels)',
-  1: '1-6 primary',
-  2: '5 to 6 entry',
-  3: '6 to 7 entry',
-};
-
-const TOPICS_BY_GRADE: Record<number, string[]> = {
-  1: ['addition', 'subtraction', 'multiplication', 'division', 'fractions', 'basic geometry', 'word problems', 'time', 'money'],
-  2: ['fractions', 'decimals', 'ratios', 'percentages', 'basic algebra', 'area and perimeter', 'logic puzzles'],
-  3: ['algebra equations', 'integers', 'coordinate geometry', 'percentages', 'multi-step word problems', 'pattern recognition'],
-};
-
-const LOGIC_TOPICS_BY_GRADE: Record<number, string[]> = {
-  0: ['patterns', 'sequences', 'analogies', 'odd one out', 'logical deductions', 'matrix reasoning', 'series completion', 'abstract reasoning'],
-  1: ['simple patterns', 'odd one out', 'basic sequences', 'picture logic', 'simple analogies'],
-  2: ['number sequences', 'letter patterns', 'analogies', 'logical deductions', 'series completion'],
-  3: ['complex patterns', 'matrix reasoning', 'multi-step logical deductions', 'verbal reasoning', 'abstract reasoning'],
-};
-
-const ENGLISH_TOPICS_BY_GRADE: Record<number, string[]> = {
-  1: ['vocabulary building', 'basic grammar', 'simple sentences', 'reading comprehension', 'spelling', 'word order', 'pronouns', 'nouns and verbs'],
-  2: ['tenses (present, past, future)', 'adjectives and adverbs', 'reading passages', 'vocabulary synonyms', 'sentence structure', 'articles (a, an, the)', 'prepositions'],
-  3: ['complex grammar rules', 'reading comprehension with questions', 'essay understanding', 'vocabulary antonyms', 'subject-verb agreement', 'modal verbs', 'reported speech'],
-};
-
-const PHYSICS_TOPICS_BY_GRADE: Record<number, string[]> = {
-  1: ['motion and speed', 'forces and gravity', 'simple machines', 'light and shadows', 'magnets', 'sound waves', 'states of matter'],
-  2: ['energy types and transformation', 'work and power', 'pressure', 'heat and temperature', 'electricity basics', 'magnetism', 'simple circuits'],
-  3: ['Newton\'s laws', 'momentum', 'energy conservation', 'electric circuits', 'electromagnetic induction', 'wave properties', 'optics and lenses'],
-};
-
-const CHEMISTRY_TOPICS_BY_GRADE: Record<number, string[]> = {
-  1: ['matter properties', 'mixtures and solutions', 'elements and compounds', 'atomic structure basics', 'periodic table introduction', 'chemical vs physical changes'],
-  2: ['chemical reactions', 'acids and bases', 'pH scale', 'chemical bonding', 'ionic and covalent bonds', 'chemical equations', 'stoichiometry basics'],
-  3: ['oxidation and reduction', 'chemical equilibrium', 'reaction rates', 'organic chemistry introduction', 'hydrocarbons', 'functional groups', 'molar mass calculations'],
-};
-
-const BIOLOGY_TOPICS_BY_GRADE: Record<number, string[]> = {
-  1: ['cells and cell structure', 'plant and animal differences', 'human body systems', 'food chains and ecosystems', 'classification of living things', 'photosynthesis basics'],
-  2: ['cell division', 'genetics basics', 'DNA structure', 'heredity and traits', 'evolution introduction', 'ecosystems and biomes', 'human organ systems'],
-  3: ['genetics and inheritance', 'Mendelian genetics', 'DNA replication', 'protein synthesis', 'natural selection', 'human anatomy and physiology', 'microbiology basics'],
-};
-
-const GEOGRAPHY_TOPICS_BY_GRADE: Record<number, string[]> = {
-  1: ['continents and oceans', 'maps and globes', 'Kazakhstan geography', 'landforms', 'water bodies', 'weather and climate basics', 'natural resources'],
-  2: ['political geography', 'countries and capitals', 'population and settlements', 'economic geography', 'Kazakhstan regions', 'natural disasters', 'climate zones'],
-  3: ['physical geography advanced', 'Kazakhstan natural resources', 'global economic systems', 'urbanization', 'environmental issues', 'geopolitics', 'cultural geography'],
-};
-
-const HISTORY_TOPICS_BY_GRADE: Record<number, string[]> = {
-  1: ['ancient civilizations', 'Kazakhstan ancient history', 'Silk Road', 'nomadic cultures', 'early settlements', 'historical figures of Kazakhstan'],
-  2: ['medieval Kazakhstan', 'Kazakh Khanate', 'Golden Horde', 'independence of Kazakhstan', 'Soviet period', 'world history major events'],
-  3: ['modern Kazakhstan history', 'independence movement', 'contemporary Kazakhstan', 'world wars', 'major historical figures', 'cultural and political developments'],
-};
-
-const INFORMATICS_TOPICS_BY_GRADE: Record<number, string[]> = {
-  1: ['algorithms basics', 'flowcharts', 'sequences and loops', 'binary numbers', 'logic gates', 'basic programming concepts', 'problem solving'],
-  2: ['data structures', 'arrays and lists', 'sorting algorithms', 'searching algorithms', 'conditional statements', 'functions and procedures', 'computational thinking'],
-  3: ['advanced algorithms', 'recursion', 'object-oriented programming', 'database basics', 'networks and internet', 'cybersecurity basics', 'algorithm efficiency'],
-};
-
-function getGradeLabel(grade: number): string {
-  return GRADE_LABELS[grade] || GRADE_LABELS[1];
-}
-
-function pickTopic(grade: number, subject: QuestionSubject = 'math'): string {
-  let topicPool: Record<number, string[]>;
-  
-  switch (subject) {
-    case 'logic':
-      topicPool = LOGIC_TOPICS_BY_GRADE;
-      break;
-    case 'english':
-      topicPool = ENGLISH_TOPICS_BY_GRADE;
-      break;
-    case 'physics':
-      topicPool = PHYSICS_TOPICS_BY_GRADE;
-      break;
-    case 'chemistry':
-      topicPool = CHEMISTRY_TOPICS_BY_GRADE;
-      break;
-    case 'biology':
-      topicPool = BIOLOGY_TOPICS_BY_GRADE;
-      break;
-    case 'geography':
-      topicPool = GEOGRAPHY_TOPICS_BY_GRADE;
-      break;
-    case 'history':
-      topicPool = HISTORY_TOPICS_BY_GRADE;
-      break;
-    case 'informatics':
-      topicPool = INFORMATICS_TOPICS_BY_GRADE;
-      break;
-    default: // math
-      topicPool = TOPICS_BY_GRADE;
-  }
-  
-  const topics = topicPool[grade] || topicPool[1];
-  return topics[Math.floor(Math.random() * topics.length)];
-}
-
 function mapDifficultyLabelToValue(label: NisBilDifficulty): number {
   if (label === 'hard') return 9;
   if (label === 'medium') return 6;
@@ -189,20 +87,18 @@ async function getAdaptiveDifficulty(userId: string): Promise<{ label: NisBilDif
 }
 
 async function getNisBilQuestions(params: {
-  grade: number;
+  topic: string;
   count: number;
   difficulty: NisBilDifficulty;
   language: QuestionLanguage;
   subject: QuestionSubject;
   difficultyValue?: number;
 }): Promise<NisBilQuestion[]> {
-  const gradeLabel = getGradeLabel(params.grade);
-  const topic = pickTopic(params.grade, params.subject);
   return await generateNisBilQuestions({
     count: params.count,
-    gradeLabel,
+    gradeLabel: 'NIS/BIL entry level',
     difficulty: params.difficulty,
-    topic,
+    topic: params.topic,
     language: params.language,
     subject: params.subject,
     difficultyValue: params.difficultyValue,
@@ -253,7 +149,7 @@ export const gameService = {
   /**
    * Create a new solo game
    */
-  async createSoloGame(userId: string, grade: number, language: QuestionLanguage, subject: QuestionSubject = 'math') {
+  async createSoloGame(userId: string, topic: string, language: QuestionLanguage, subject: QuestionSubject = 'math') {
     // Get user's current difficulty
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -271,7 +167,7 @@ export const gameService = {
         gameType: 'solo',
         createdBy: userId,
         difficulty: adaptiveDifficulty.value,
-        grade,
+        grade: 0,
       },
     });
 
@@ -286,7 +182,7 @@ export const gameService = {
     const storedQuestions = [] as Array<{ id: string; text: string; options: string[]; difficulty: number; explanation: string | null; subject: string }>;
 
     const aiQuestions = await getNisBilQuestions({
-      grade,
+      topic,
       count: 10,
       difficulty: adaptiveDifficulty.label,
       language,
@@ -408,7 +304,7 @@ export const gameService = {
   /**
    * Create multiplayer game
    */
-  async createMultiplayerGame(userId: string, grade: number, _language: QuestionLanguage, subject: QuestionSubject = 'math') {
+  async createMultiplayerGame(userId: string, topic: string, _language: QuestionLanguage, subject: QuestionSubject = 'math') {
     const user = await prisma.user.findUnique({
       where: { id: userId },
     });
@@ -424,7 +320,7 @@ export const gameService = {
         gameType: 'multiplayer',
         createdBy: userId,
         difficulty: adaptiveDifficulty.value,
-        grade,
+        grade: 0,
         subject,
       },
     });
@@ -440,14 +336,14 @@ export const gameService = {
     return {
       gameId: game.id,
       createdBy: userId,
-      grade: game.grade,
+      topic,
     };
   },
 
   /**
    * Join multiplayer game
    */
-  async joinMultiplayerGame(gameId: string, userId: string, grade: number, language: QuestionLanguage, subject: QuestionSubject = 'math') {
+  async joinMultiplayerGame(gameId: string, userId: string, topic: string, language: QuestionLanguage, subject: QuestionSubject = 'math') {
     const game = await prisma.game.findUnique({
       where: { id: gameId },
     });
@@ -458,10 +354,6 @@ export const gameService = {
 
     if (game.status !== 'active') {
       throw new Error('Game is not active');
-    }
-
-    if (game.grade !== grade) {
-      throw new Error(`This room is for Grade ${game.grade} players only`);
     }
 
     // Check if user already joined
@@ -508,7 +400,7 @@ export const gameService = {
         const gameSubject = (game as any).subject as QuestionSubject || 'math';
         
         const aiQuestions = await getNisBilQuestions({
-          grade: game.grade,
+          topic,
           count: 10,
           difficulty: difficultyLabel,
           language,
@@ -541,7 +433,7 @@ export const gameService = {
         return {
           gameId,
           status: 'ready',
-          grade: game.grade,
+          topic,
           questions: storedQuestions,
         };
       }

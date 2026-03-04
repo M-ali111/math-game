@@ -4,7 +4,7 @@ import { useGame, Subject } from './context/GameContext';
 import { Login } from './components/Login';
 import { GameMenu } from './components/GameMenu';
 import { ModeSelection } from './components/ModeSelection';
-import { GradeSelector } from './components/GradeSelector';
+import { TopicSelection } from './components/TopicSelection';
 import { SoloGame } from './components/SoloGame';
 import { MultiplayerGame } from './components/MultiplayerGame';
 import { Stats } from './components/Stats';
@@ -15,7 +15,7 @@ type AppState =
   | 'login' 
   | 'menu' 
   | 'mode-selection'
-  | 'grade-selection'
+  | 'topic-selection'
   | 'solo' 
   | 'multiplayer' 
   | 'stats'
@@ -26,7 +26,7 @@ const AppContent: React.FC = () => {
   const [selectedGameMode, setSelectedGameMode] = useState<'solo' | 'multiplayer' | 'random' | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const { user, token, logout } = useAuth();
-  const { subject, setSubject, setSelectedMode, setSelectedGrade, resetGameFlow } = useGame();
+  const { subject, setSubject, setSelectedMode, setSelectedTopic, resetGameFlow } = useGame();
 
   useEffect(() => {
     if (token && user) {
@@ -65,25 +65,13 @@ const AppContent: React.FC = () => {
     const actualMode = mode === 'random' ? 'solo' : mode; // Convert random to solo for context
     setSelectedMode(actualMode);
     
-    // If Math subject, show grade selection
-    if (subject === 'math') {
-      setAppState('grade-selection');
-    } else {
-      // For all other subjects (logic, english, physics, chemistry, biology, geography, history, informatics)
-      // Set default grade and go straight to the game
-      const defaultGrade = subject === 'logic' ? 0 : 1; // Logic defaults to 0 (general), others default to 1
-      setSelectedGrade(defaultGrade);
-      if (mode === 'solo' || mode === 'random') {
-        setAppState('solo');
-      } else {
-        setAppState('multiplayer');
-      }
-    }
+    // All subjects go to topic selection
+    setAppState('topic-selection');
   };
 
-  const handleGradeSelected = (grade: number) => {
-    setSelectedGrade(grade as any);
-    // After grade selection, go to the game
+  const handleTopicSelected = (topic: string) => {
+    setSelectedTopic(topic);
+    // After topic selection, go to the game
     if (selectedGameMode === 'solo' || selectedGameMode === 'random') {
       setAppState('solo');
     } else {
@@ -95,7 +83,7 @@ const AppContent: React.FC = () => {
     setAppState('menu');
   };
 
-  const handleBackFromGradeSelection = () => {
+  const handleBackFromTopicSelection = () => {
     setAppState('mode-selection');
   };
 
@@ -125,10 +113,10 @@ const AppContent: React.FC = () => {
           onBack={handleBackFromModeSelection}
         />
       )}
-      {appState === 'grade-selection' && subject === 'math' && (
-        <GradeSelector 
-          onSelect={handleGradeSelected}
-          onBack={handleBackFromGradeSelection}
+      {appState === 'topic-selection' && subject && (
+        <TopicSelection 
+          onTopicSelected={handleTopicSelected}
+          onBack={handleBackFromTopicSelection}
         />
       )}
       {appState === 'solo' && <SoloGame onBack={handleBack} />}

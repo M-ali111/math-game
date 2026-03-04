@@ -4,14 +4,6 @@ import { authMiddleware } from '../middleware/auth';
 
 const router = Router();
 
-function parseGrade(value: unknown): number {
-  const grade = Number(value);
-  if (!Number.isInteger(grade) || grade < 0 || grade > 3) {
-    throw new Error('Invalid grade option. Please select a valid entry level.');
-  }
-  return grade;
-}
-
 function parseLanguage(value: unknown): 'english' | 'russian' | 'kazakh' {
   if (!value) return 'english';
   if (value === 'english' || value === 'russian' || value === 'kazakh') {
@@ -32,16 +24,15 @@ function parseSubject(value: unknown): 'math' | 'logic' | 'english' | 'physics' 
 // Solo game routes
 router.post('/solo/start', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { grade, language, subject } = req.body;
+    const { topic, language, subject } = req.body;
     
-    if (grade === undefined || language === undefined || subject === undefined) {
-      return res.status(400).json({ error: 'Missing required fields: grade, language, subject' });
+    if (topic === undefined || language === undefined || subject === undefined) {
+      return res.status(400).json({ error: 'Missing required fields: topic, language, subject' });
     }
     
-    const parsedGrade = parseGrade(grade);
     const parsedLanguage = parseLanguage(language);
     const parsedSubject = parseSubject(subject);
-    const gameData = await gameService.createSoloGame(req.userId!, parsedGrade, parsedLanguage, parsedSubject);
+    const gameData = await gameService.createSoloGame(req.userId!, topic, parsedLanguage, parsedSubject);
     res.json(gameData);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -85,16 +76,15 @@ router.post('/solo/:gameId/complete', authMiddleware, async (req: Request, res: 
 // Multiplayer game routes
 router.post('/multiplayer/create', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const { grade, language, subject } = req.body;
+    const { topic, language, subject } = req.body;
     
-    if (grade === undefined || language === undefined || subject === undefined) {
-      return res.status(400).json({ error: 'Missing required fields: grade, language, subject' });
+    if (topic === undefined || language === undefined || subject === undefined) {
+      return res.status(400).json({ error: 'Missing required fields: topic, language, subject' });
     }
     
-    const parsedGrade = parseGrade(grade);
     const parsedLanguage = parseLanguage(language);
     const parsedSubject = parseSubject(subject);
-    const gameData = await gameService.createMultiplayerGame(req.userId!, parsedGrade, parsedLanguage, parsedSubject);
+    const gameData = await gameService.createMultiplayerGame(req.userId!, topic, parsedLanguage, parsedSubject);
     res.json(gameData);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -104,20 +94,19 @@ router.post('/multiplayer/create', authMiddleware, async (req: Request, res: Res
 router.post('/multiplayer/:gameId/join', authMiddleware, async (req: Request, res: Response) => {
   try {
     const { gameId } = req.params;
-    const { grade, language, subject } = req.body;
+    const { topic, language, subject } = req.body;
     
     if (!gameId) {
       return res.status(400).json({ error: 'Missing required field: gameId' });
     }
     
-    if (grade === undefined || language === undefined || subject === undefined) {
-      return res.status(400).json({ error: 'Missing required fields: grade, language, subject' });
+    if (topic === undefined || language === undefined || subject === undefined) {
+      return res.status(400).json({ error: 'Missing required fields: topic, language, subject' });
     }
     
-    const parsedGrade = parseGrade(grade);
     const parsedLanguage = parseLanguage(language);
     const parsedSubject = parseSubject(subject);
-    const result = await gameService.joinMultiplayerGame(gameId, req.userId!, parsedGrade, parsedLanguage, parsedSubject);
+    const result = await gameService.joinMultiplayerGame(gameId, req.userId!, topic, parsedLanguage, parsedSubject);
     res.json(result);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
